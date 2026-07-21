@@ -1,55 +1,147 @@
 import streamlit as st
+from streamlit_option_menu import option_menu
+from views.auth import login, register 
+from utils.auth import logout
+from views import dashboard, settings
 
-st.set_page_config(page_title="Financial Data Lake", page_icon="🏦", layout="wide")
+# ==========================================
+# 1. CẤU HÌNH TRANG
+# ==========================================
+st.set_page_config(
+    page_title="FSD Terminal - Data Lake",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
 
-# Tạo Session State
-if 'logged_in' not in st.session_state:
-    st.session_state['logged_in'] = False
-if 'username' not in st.session_state:
-    st.session_state['username'] = ''
+# Khởi tạo trạng thái đăng nhập và bộ nhớ Data Lake (Session)
+if 'authenticated' not in st.session_state: st.session_state.authenticated = False
+if 'show_register' not in st.session_state: st.session_state.show_register = False
+if 'datalake_data' not in st.session_state: st.session_state['datalake_data'] = {} # Nơi lưu trữ datasets
 
-def login():
-    st.session_state['logged_in'] = True
-    st.success("Đăng nhập thành công!")
-
-def logout():
-    st.session_state['logged_in'] = False
-    st.session_state['username'] = ''
-    st.info("Đã đăng xuất.")
-
-# --- UI GIAO DIỆN AUTH ---
-if not st.session_state['logged_in']:
-    st.title("🏦 Financial Research Platform")
-    st.markdown("Hệ thống Data Lake phân tích thị trường chứng khoán Việt Nam (Dữ liệu từ VNStock, HOSE, HNX).")
+# ==========================================
+# 2. CUSTOM CSS
+# ==========================================
+st.markdown("""
+<style>
+    .stApp { background-color: #f8fafc; color: #0f172a; font-family: 'Inter', sans-serif; }
+    #MainMenu { visibility: hidden; }
     
-    tab1, tab2 = st.tabs(["Đăng nhập", "Đăng ký"])
+    .block-container { padding-top: 3.5rem !important; max-width: 100% !important; }
     
-    with tab1:
-        st.subheader("Đăng nhập hệ thống")
-        username = st.text_input("Tên đăng nhập", key="login_user")
-        password = st.text_input("Mật khẩu", type="password", key="login_pass")
-        if st.button("Đăng nhập", type="primary"):
-            if username and password:
-                st.session_state['username'] = username
-                login()
-                st.rerun() # Load lại trang để vào app
-            else:
-                st.error("Vui lòng nhập tài khoản và mật khẩu.")
-                
-    with tab2:
-        st.subheader("Tạo tài khoản mới")
-        new_user = st.text_input("Tên đăng nhập mới")
-        new_pass = st.text_input("Mật khẩu mới", type="password")
-        new_email = st.text_input("Email")
-        if st.button("Đăng ký"):
-            st.success("Tạo tài khoản thành công! Vui lòng đăng nhập.")
+    .fsd-logo { font-family: 'Orbitron', sans-serif; font-size: 26px; font-weight: 900; background: linear-gradient(90deg, #2563eb, #0ea5e9); -webkit-background-clip: text; -webkit-text-fill-color: transparent; letter-spacing: 2px; }
+    
+    /* --- STYLE NÚT ACCOUNT BÊN NGOÀI --- */
+    div[data-testid="stPopover"] > button { 
+        border: 1px solid #cbd5e1 !important; 
+        background-color: #ffffff !important; 
+        color: #0f172a !important; 
+        border-radius: 8px !important; 
+        height: 44px !important; 
+        font-weight: 600 !important;
+        margin-top: 2px !important; 
+    }
+    
+    div[data-testid="stPopover"] > button:hover { 
+        border-color: #2563eb !important; 
+        background-color: #f8fafc !important; 
+    }
+    
+    /* --- TRANG TRÍ NÚT LOG OUT (Dùng kind="primary" để phân biệt) --- */
+    div[data-testid="stPopoverBody"] button[kind="primary"] {
+        background-color: #fff1f2 !important; /* Nền đỏ cực nhạt */
+        border: 1px solid #ffe4e6 !important;
+        color: #e11d48 !important; /* Chữ màu đỏ */
+        border-radius: 6px !important;
+        padding: 8px 12px !important;
+        justify-content: center !important; /* Căn giữa nội dung */
+        transition: all 0.2s ease-in-out !important;
+        margin-top: 5px !important;
+        box-shadow: none !important;
+    }
+    
+    div[data-testid="stPopoverBody"] button[kind="primary"]:hover {
+        background-color: #e11d48 !important; /* Chuyển nền đỏ đậm khi hover */
+        color: #ffffff !important; /* Chữ trắng */
+        border-color: #e11d48 !important;
+    }
+    
+    div[data-testid="stPopoverBody"] button[kind="primary"] p {
+        font-size: 14px !important;
+        font-weight: 600 !important;
+        margin: 0 !important;
+        color: inherit !important; /* Kế thừa màu từ button để đổi màu mượt mà */
+    }
+</style>
+""", unsafe_allow_html=True)
+
+# ==========================================
+# 3. ĐIỀU HƯỚNG LOGIC (GATEKEEPER)
+# ==========================================
+if st.session_state.authenticated:
+    
+    # --- 3A. SIDEBAR (MENU CHÍNH) ---
+    with st.sidebar:
+        st.markdown("<div class='fsd-logo' style='margin-bottom: 20px; padding-left: 10px;'>FSD // </div>", unsafe_allow_html=True)
+        
+        # Menu mới theo đúng 6 module yêu cầu
+        selected_page = option_menu(
+            menu_title=None,
+            options=["Dashboard", "Settings"],
+            icons=["house-door", "gear"],
+            default_index=0,
+            styles={
+                "nav-link": {"font-size": "13px", "font-weight": "600", "text-transform": "uppercase"},
+                "nav-link-selected": {"background-color": "rgba(37, 99, 235, 0.08)", "color": "#2563eb", "border-left": "4px solid #2563eb"}
+            }
+        )
+        st.markdown("<br><br><br>", unsafe_allow_html=True)
+
+    # --- 3B. THANH LỆNH TRÊN CÙNG (TOP BAR) ---
+    col_memory, col_user = st.columns([5, 1])
+    
+    with col_memory:
+        dataset_count = len(st.session_state['datalake_data'])
+        st.markdown(f"""
+            <div style='height: 44px; display: flex; align-items: center; padding: 0 15px; margin-top: 2px; background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px;'>
+                <span style='font-size: 14px; font-weight: 600; color: #64748b;'>ACTIVE SESSION MEMORY:</span> 
+                <span style='font-size: 14px; font-weight: 800; color: #2563eb; margin-left: 10px;'>{dataset_count} Datasets Loaded</span>
+            </div>
+        """, unsafe_allow_html=True)
+
+    with col_user:
+        with st.popover("👤 Account", use_container_width=True):
+            st.markdown("### 👤 User Profile")
+            st.markdown("Terminal ID: <span class='mono-data' style='color: #2563eb; font-weight: bold;'>#X9-FSD</span>", unsafe_allow_html=True)
+            st.divider()
+            
+            st.markdown("""
+                <div style='font-size: 14px;'>
+                    <p><b>Username:</b> FSD_Admin</p>
+                    <p><b>Email:</b> admin@fsd-terminal.com</p>
+                    <p><b>Password:</b> ••••••••••••</p>
+                </div>
+            """, unsafe_allow_html=True)
+            
+            st.divider()
+            
+            # Khôi phục type="primary" để CSS nhận diện và thêm icon cửa cho trực quan
+            if st.button("🚪 Log out", type="primary", use_container_width=True):
+                logout()
+
+    st.markdown("<hr style='border-color: #e2e8f0; margin: 10px 0;'>", unsafe_allow_html=True)
+
+    # --- 3C. ROUTING (ĐIỀU HƯỚNG CÁC TRANG) ---
+    try:
+        if selected_page == "Dashboard": 
+            dashboard.render()
+        elif selected_page == "Settings": 
+            settings.render()
+    except Exception as e:
+        st.warning(f"🚧 Module '{selected_page}' đang được xây dựng. Vui lòng tạo file tương ứng trong thư mục views/.")
+
 else:
-    # --- KHI ĐÃ ĐĂNG NHẬP THÀNH CÔNG ---
-    st.sidebar.title(f"Xin chào, {st.session_state['username']} 👋")
-    st.sidebar.button("Đăng xuất", on_click=logout)
-    
-    st.sidebar.markdown("---")
-    st.sidebar.info("Vui lòng chọn chức năng từ Menu bên trái.")
-    
-    st.title("Trang chủ Hệ thống")
-    st.write("Bạn đã đăng nhập thành công. Các module chức năng (Dashboard, Prediction...) hiện đã khả dụng ở thanh điều hướng.")
+    # --- GIAO DIỆN LOGIN/REGISTER ---
+    if st.session_state.show_register:
+        register.render()
+    else:
+        login.render()
