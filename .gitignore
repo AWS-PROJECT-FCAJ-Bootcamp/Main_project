@@ -2,3 +2,14 @@
 *.pyc
 .venv/
 venv/
+**/curated_data/
+*.csv
+data/
+reports/
+*.json
+!src/schemas/*.json
+*.log
+artifacts/
+src/dq/dq_report_batch_*.json
+src/etl/curated_data/
+src/etl/quarantine_data/
