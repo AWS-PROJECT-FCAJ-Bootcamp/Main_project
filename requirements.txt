@@ -1,7 +1,0 @@
-streamlit
-streamlit-authenticator
-streamlit-option-menu
-pandas
-plotly
-requests
-uvicorn
