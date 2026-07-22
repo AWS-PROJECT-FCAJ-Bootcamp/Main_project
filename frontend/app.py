@@ -1,8 +1,9 @@
 import streamlit as st
 from streamlit_option_menu import option_menu
+# from frontend.views import data_explorer
 from views.auth import login, register 
 from utils.auth import logout
-from views import dashboard, settings
+from views import dashboard, settings, data_explorer
 
 # ==========================================
 # 1. CẤU HÌNH TRANG
@@ -86,8 +87,8 @@ if st.session_state.authenticated:
         # Menu mới theo đúng 6 module yêu cầu
         selected_page = option_menu(
             menu_title=None,
-            options=["Dashboard", "Settings"],
-            icons=["house-door", "gear"],
+            options=["Dashboard", "Data Explorer", "Settings"],
+            icons=["house-door", "search", "gear"],
             default_index=0,
             styles={
                 "nav-link": {"font-size": "13px", "font-weight": "600", "text-transform": "uppercase"},
@@ -136,6 +137,8 @@ if st.session_state.authenticated:
             dashboard.render()
         elif selected_page == "Settings": 
             settings.render()
+        elif selected_page == "Data Explorer": 
+            data_explorer.render()    
     except Exception as e:
         st.warning(f"🚧 Module '{selected_page}' đang được xây dựng. Vui lòng tạo file tương ứng trong thư mục views/.")
 
