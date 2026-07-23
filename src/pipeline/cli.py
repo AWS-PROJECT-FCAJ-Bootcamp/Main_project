@@ -15,7 +15,7 @@ def build_parser() -> argparse.ArgumentParser:
     ingest.add_argument("--tickers", nargs="+", required=True)
     ingest.add_argument("--start", required=True)
     ingest.add_argument("--end", required=True)
-    ingest.add_argument("--interval", default="1D")
+    ingest.add_argument("--interval", default="1D", choices=["1D"])
 
     subparsers.add_parser("transform", help="Transform canonical raw data into curated Parquet")
     subparsers.add_parser("bootstrap", help="Create curated data from raw data or the committed PoC seed")
@@ -46,4 +46,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

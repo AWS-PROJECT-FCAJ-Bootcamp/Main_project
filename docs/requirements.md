@@ -8,7 +8,7 @@ Chứng minh trên local một vertical slice chạy được từ nguồn dữ 
 
 | ID | Yêu cầu | Tiêu chí chấp nhận |
 |---|---|---|
-| FR-01 | Nguồn dữ liệu | Adapter gọi `vnstock`/VCI, có retry và lỗi chuẩn hóa. |
+| FR-01 | Nguồn dữ liệu | Adapter gọi Vnstock Free Unified API bằng `VNSTOCK_API_KEY`, chỉ interval `1D`, có retry, rate limit tối đa 60 RPM và lỗi chuẩn hóa. |
 | FR-02 | Raw layer | Ghi JSON có metadata và record theo partition ngày; không ghi record sai contract. |
 | FR-03 | Curated layer | Đọc raw, deduplicate theo ticker/ngày, tính Return/MA20/RSI14, ghi Parquet theo ticker. |
 | FR-04 | Consumption API | FastAPI/DuckDB đọc trực tiếp curated; hỗ trợ companies, prices, date filter và export. |
@@ -29,7 +29,8 @@ Chứng minh trên local một vertical slice chạy được từ nguồn dữ 
 
 - `uv` quản lý/sync dependency; `uvicorn` chạy FastAPI.
 - `.env` chỉ chứa runtime configuration/secrets và không được commit.
-- VCI hiện không yêu cầu key; `DATA_PROVIDER_API_KEY` để trống.
+- Live ingestion yêu cầu `VNSTOCK_API_KEY`; key để trống trong `.env.example` và chỉ điền ở `.env` local/GitHub Secret.
+- Free tier chỉ dùng interval `1D` và không cấu hình vượt 60 request/phút.
 - `pyproject.toml` và `uv.lock` là dependency sources chính thức, không duy trì requirements phân tán.
 
 ## Non-functional requirements
@@ -47,4 +48,3 @@ Chứng minh trên local một vertical slice chạy được từ nguồn dữ 
 - S3/Glue/Athena/MinIO production-equivalent deployment.
 - High availability, autoscaling và full observability stack.
 - Cam kết SLA market data của bên thứ ba.
-

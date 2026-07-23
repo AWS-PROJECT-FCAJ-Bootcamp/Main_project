@@ -8,15 +8,15 @@ from utils.api_client import ApiClientError, get_prices, run_pipeline
 
 def render() -> None:
     st.markdown("### Data Explorer — Live Ingestion")
-    st.caption("Luồng thật: vnstock/VCI → Raw JSON → validation/indicators → Curated Parquet → API.")
+    st.caption("Luồng thật: Vnstock Free API (API key) → Raw JSON → validation/indicators → Curated Parquet → API.")
 
     with st.form("live_ingestion"):
         ticker_text = st.text_input("Ticker", value="FPT", help="Có thể nhập nhiều mã, phân cách bằng dấu phẩy.")
         col_start, col_end, col_interval = st.columns([1, 1, 0.7])
         start_date = col_start.date_input("Từ ngày", value=date.today() - timedelta(days=90))
         end_date = col_end.date_input("Đến ngày", value=date.today())
-        interval = col_interval.selectbox("Interval", ["1D", "1H"])
-        submitted = st.form_submit_button("Chạy ingestion thật", type="primary", use_container_width=True)
+        interval = col_interval.selectbox("Interval", ["1D"])
+        submitted = st.form_submit_button("Chạy ingestion thật", type="primary", width="stretch")
 
     if submitted:
         tickers = list(dict.fromkeys(item.strip().upper() for item in ticker_text.split(",") if item.strip()))
@@ -25,7 +25,7 @@ def render() -> None:
         elif start_date > end_date:
             st.error("Từ ngày phải nhỏ hơn hoặc bằng đến ngày.")
         else:
-            with st.spinner("Đang gọi VCI, ghi Raw và cập nhật Curated..."):
+            with st.spinner("Đang gọi Vnstock Free API, ghi Raw và cập nhật Curated..."):
                 try:
                     result = run_pipeline(tickers, start_date.isoformat(), end_date.isoformat(), interval)
                     st.session_state["last_pipeline_result"] = result
@@ -44,13 +44,13 @@ def render() -> None:
     col2.metric("Passed", ingestion["passed"])
     col3.metric("Failed", ingestion["failed"])
     st.caption(f"Raw file: {ingestion['raw_path']}")
-    st.dataframe(pd.DataFrame(ingestion["details"]), use_container_width=True, hide_index=True)
+    st.dataframe(pd.DataFrame(ingestion["details"]), width="stretch", hide_index=True)
 
     successful = [item["ticker"] for item in ingestion["details"] if item["status"] == "PASS"]
     if successful:
         selected = st.selectbox("Preview dữ liệu qua consumption API", successful)
         try:
             preview = pd.DataFrame(get_prices(selected, limit=1000)["data"])
-            st.dataframe(preview.tail(20), use_container_width=True, hide_index=True)
+            st.dataframe(preview.tail(20), width="stretch", hide_index=True)
         except ApiClientError as error:
             st.error(str(error))

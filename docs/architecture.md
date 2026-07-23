@@ -4,7 +4,7 @@
 
 ```mermaid
 flowchart LR
-    VCI[vnstock / VCI] --> ING[src.pipeline.ingestion]
+    VNS[Vnstock Free Unified API<br/>VNSTOCK_API_KEY / 1D / max 60 RPM] --> ING[src.pipeline.ingestion]
     ING --> RAW[data/raw JSON]
     SEED[reports/raw PoC seed] --> ETL[src.pipeline.transform]
     RAW --> ETL
@@ -23,7 +23,8 @@ flowchart LR
 3. **DuckDB query-on-read:** Không cần database server cho PoC; API query trực tiếp Parquet.
 4. **Partition theo ticker:** Giảm phạm vi file phải đọc và giúp thay thế dữ liệu của từng ticker độc lập.
 5. **Một cấu hình chung:** `src/settings.py` đọc environment/`.env`; frontend chỉ nhận `API_BASE_URL`.
-6. **Secrets không đi qua FE:** Provider key chỉ tồn tại trong backend/pipeline environment.
+6. **Secrets không đi qua FE:** `VNSTOCK_API_KEY` chỉ tồn tại trong backend/pipeline environment.
+7. **Free-tier guard:** Source adapter fail-fast nếu thiếu key, interval khác `1D` hoặc rate vượt 60 RPM.
 
 ## Startup sequence
 
@@ -45,4 +46,3 @@ sequenceDiagram
 ## Scale path
 
 Các interface quan trọng đã tách riêng: source adapter, raw contract, transform và consumption service. Khi nâng lên AWS có thể thay local filesystem bằng S3, CLI/service bằng EventBridge/SQS/Lambda/ECS và DuckDB local bằng Athena/Glue mà không thay đổi schema giao tiếp với frontend.
-

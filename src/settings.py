@@ -1,6 +1,7 @@
 from functools import lru_cache
 from pathlib import Path
 
+from pydantic import SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -12,9 +13,10 @@ class Settings(BaseSettings):
 
     app_name: str = "Financial Data Platform API"
     environment: str = "local"
-    data_provider: str = "VCI"
-    data_provider_api_key: str = ""
-    vci_request_delay_seconds: float = 3.5
+    data_provider: str = "VNSTOCK_FREE"
+    vnstock_api_key: SecretStr = SecretStr("")
+    vnstock_requests_per_minute: int = 60
+    data_provider_api_key: SecretStr = SecretStr("")
 
     raw_data_dir: Path = Path("data/raw/ohlcv")
     curated_data_dir: Path = Path("data/curated/ohlcv")
@@ -59,4 +61,3 @@ def get_settings() -> Settings:
 
 
 settings = get_settings()
-

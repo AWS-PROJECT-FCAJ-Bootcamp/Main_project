@@ -23,6 +23,7 @@ dist/
 .coverage
 .coverage.*
 htmlcov/
+coverage.xml
 .mypy_cache/
 .ruff_cache/
 
@@ -34,6 +35,8 @@ data/curated/**
 reports/checkpoints/**
 reports/*_report*.csv
 reports/*_failed_list.csv
+reports/tests/**
+!reports/tests/.gitkeep
 
 # Logs and temporary files
 *.log

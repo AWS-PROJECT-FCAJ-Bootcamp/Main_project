@@ -8,7 +8,7 @@ router = APIRouter(prefix="/companies", tags=["Companies"])
 @router.get("", response_model=CompanyListResponse)
 def get_companies(
     page: int = Query(1, ge=1, description="Trang hiện tại"),
-    limit: int = Query(50, le=100, description="Số lượng kết quả mỗi trang"),
+    limit: int = Query(50, ge=1, le=100, description="Số lượng kết quả mỗi trang"),
     data_service: DataService = Depends(get_data_service)
 ):
     """Return companies that actually exist in the curated layer."""

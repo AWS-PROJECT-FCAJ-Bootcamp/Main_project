@@ -9,7 +9,7 @@ import pandas as pd
 from pydantic import ValidationError
 
 from src.pipeline.models import IngestionMetadata, OhlcvRecord, RawTickerPayload
-from src.pipeline.source import MarketDataSource, VnstockVciSource
+from src.pipeline.source import MarketDataSource, build_market_data_source
 from src.settings import Settings, get_settings
 
 
@@ -64,7 +64,7 @@ def ingest_tickers(
     config: Settings | None = None,
 ) -> dict:
     config = config or get_settings()
-    source = source or VnstockVciSource()
+    source = source or build_market_data_source(config)
     clean_tickers = list(dict.fromkeys(_safe_ticker(ticker) for ticker in tickers))
     if not clean_tickers:
         raise ValueError("At least one ticker is required")
@@ -126,4 +126,3 @@ def ingest_tickers(
         "failed": sum(payload.metadata.status == "FAIL" for payload in payloads),
         "details": [payload.metadata.model_dump(mode="json") for payload in payloads],
     }
-

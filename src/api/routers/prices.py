@@ -1,10 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import StreamingResponse
-from typing import Optional
 import io
 import json
 import zipfile
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from src.api.schemas.api_models import PriceListResponse
 from src.api.dependencies import get_data_service
 from src.api.services.data_service import DataService
@@ -14,15 +13,23 @@ router = APIRouter(prefix="/prices", tags=["Prices"])
 @router.get("", response_model=PriceListResponse)
 def get_prices(
     ticker: str = Query(..., description="Mã chứng khoán cần tra cứu"),
-    start_date: Optional[str] = Query(None, description="Ngày bắt đầu (YYYY-MM-DD)"),
-    end_date: Optional[str] = Query(None, description="Ngày kết thúc (YYYY-MM-DD)"),
+    start_date: date | None = Query(None, description="Ngày bắt đầu (YYYY-MM-DD)"),
+    end_date: date | None = Query(None, description="Ngày kết thúc (YYYY-MM-DD)"),
     page: int = Query(1, ge=1, description="Trang hiện tại"),
-    limit: int = Query(100, le=1000, description="Số lượng kết quả mỗi trang"),
+    limit: int = Query(100, ge=1, le=1000, description="Số lượng kết quả mỗi trang"),
     data_service: DataService = Depends(get_data_service)
 ):
     """Query curated OHLCV data with optional date filters."""
+    if start_date and end_date and start_date > end_date:
+        raise HTTPException(status_code=422, detail="start_date must not be after end_date")
     try:
-        return data_service.get_prices(ticker, start_date, end_date, page, limit)
+        return data_service.get_prices(
+            ticker,
+            start_date.isoformat() if start_date else None,
+            end_date.isoformat() if end_date else None,
+            page,
+            limit,
+        )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Lỗi Server: {str(e)}")
 

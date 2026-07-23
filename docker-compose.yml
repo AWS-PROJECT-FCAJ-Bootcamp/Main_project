@@ -17,6 +17,8 @@ services:
     command: ["python", "-m", "src.pipeline.cli", "bootstrap"]
     environment:
       ENVIRONMENT: docker
+      DATA_PROVIDER: VNSTOCK_FREE
+      VNSTOCK_REQUESTS_PER_MINUTE: 60
       RAW_DATA_DIR: data/raw/ohlcv
       CURATED_DATA_DIR: data/curated/ohlcv
       SEED_RAW_DATA_DIR: reports/raw/ohlcv
@@ -27,6 +29,8 @@ services:
     command: ["uvicorn", "src.api.main:app", "--host", "0.0.0.0", "--port", "8000"]
     environment:
       ENVIRONMENT: docker
+      DATA_PROVIDER: VNSTOCK_FREE
+      VNSTOCK_REQUESTS_PER_MINUTE: 60
       RAW_DATA_DIR: data/raw/ohlcv
       CURATED_DATA_DIR: data/curated/ohlcv
       SEED_RAW_DATA_DIR: reports/raw/ohlcv

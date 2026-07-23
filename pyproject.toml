@@ -18,16 +18,40 @@ dependencies = [
     "streamlit>=1.45,<2",
     "streamlit-option-menu>=0.4,<1",
     "uvicorn[standard]>=0.34,<1",
-    "vnstock>=3.2,<4",
+    "vnstock>=4.0.3,<5",
 ]
 
 [dependency-groups]
 dev = [
     "pytest>=8.3,<10",
+    "pytest-cov>=6,<8",
+    "pytest-timeout>=2.3,<3",
+    "pyyaml>=6,<7",
 ]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["."]
-addopts = "-ra"
+addopts = "-ra --strict-markers --strict-config"
+junit_family = "legacy"
+markers = [
+    "unit: isolated tests for one module or class",
+    "integration: tests across repository components without external network access",
+    "frontend: Streamlit user-flow and frontend HTTP-client tests",
+    "performance: deterministic local latency quality gates",
+    "container: static and executable container composition contract tests",
+    "live: opt-in tests that call an external market-data provider",
+]
 
+[tool.coverage.run]
+branch = true
+source = ["src", "frontend"]
+omit = ["src/legacy/*"]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = false
+exclude_also = [
+    'if TYPE_CHECKING:',
+    '\.\.\.',
+]

@@ -66,7 +66,7 @@ def _render_chart(frame: pd.DataFrame, ticker: str) -> None:
         xaxis_rangeslider_visible=False,
         hovermode="x unified",
     )
-    st.plotly_chart(figure, use_container_width=True)
+    st.plotly_chart(figure, width="stretch")
 
 
 def render() -> None:
@@ -128,4 +128,4 @@ def render() -> None:
     _render_chart(frame, company["ticker"])
 
     with st.expander("Xem dữ liệu curated"):
-        st.dataframe(frame, use_container_width=True, hide_index=True)
+        st.dataframe(frame, width="stretch", hide_index=True)
