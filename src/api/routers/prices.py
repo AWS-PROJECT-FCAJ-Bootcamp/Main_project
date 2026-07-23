@@ -4,14 +4,14 @@ from typing import Optional
 import io
 import json
 import zipfile
-from datetime import datetime
+from datetime import datetime, timezone
 from src.api.schemas.api_models import PriceListResponse
 from src.api.dependencies import get_data_service
 from src.api.services.data_service import DataService
 
 router = APIRouter(prefix="/prices", tags=["Prices"])
 
-@router.get("/", response_model=PriceListResponse)
+@router.get("", response_model=PriceListResponse)
 def get_prices(
     ticker: str = Query(..., description="Mã chứng khoán cần tra cứu"),
     start_date: Optional[str] = Query(None, description="Ngày bắt đầu (YYYY-MM-DD)"),
@@ -20,9 +20,7 @@ def get_prices(
     limit: int = Query(100, le=1000, description="Số lượng kết quả mỗi trang"),
     data_service: DataService = Depends(get_data_service)
 ):
-    """
-    API truy vấn dữ liệu OHLCV theo từng mã cổ phiếu có phân trang (Task K09)
-    """
+    """Query curated OHLCV data with optional date filters."""
     try:
         return data_service.get_prices(ticker, start_date, end_date, page, limit)
     except Exception as e:
@@ -53,7 +51,7 @@ def export_prices(
         manifest = {
             "source": "Local Data Lake (Parquet)",
             "ticker": ticker,
-            "export_time": datetime.utcnow().isoformat() + "Z",
+            "export_time": datetime.now(timezone.utc).isoformat(),
             "format": format,
             "row_count": len(df),
             "columns": list(df.columns),
