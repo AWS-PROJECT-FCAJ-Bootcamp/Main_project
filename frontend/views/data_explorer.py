@@ -68,7 +68,7 @@ def render() -> None:
                     selected, 
                     start_date.isoformat(), 
                     end_date.isoformat(), 
-                    limit=10000
+                    limit=1000
                 )["data"]
                 st.session_state["preview_cache"][selected] = pd.DataFrame(payload)
 

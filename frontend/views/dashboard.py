@@ -15,7 +15,7 @@ def load_companies() -> list[dict]:
 
 @st.cache_data(ttl=30)
 def load_prices(ticker: str, start_date: str | None, end_date: str | None) -> pd.DataFrame:
-    payload = get_prices(ticker, start_date, end_date, limit=10000)
+    payload = get_prices(ticker, start_date, end_date, limit=1000)
     frame = pd.DataFrame(payload["data"])
     if not frame.empty:
         frame["trading_date"] = pd.to_datetime(frame["trading_date"])
