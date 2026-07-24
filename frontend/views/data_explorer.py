@@ -1,14 +1,19 @@
 from datetime import date, timedelta
+import math 
 
 import pandas as pd
 import streamlit as st
 
 from utils.api_client import ApiClientError, get_prices, run_pipeline
 
-
 def render() -> None:
     st.markdown("### Data Explorer — Live Ingestion")
     st.caption("Luồng thật: Vnstock Free API (API key) → Raw JSON → validation/indicators → Curated Parquet → API.")
+
+    if "preview_cache" not in st.session_state:
+        st.session_state["preview_cache"] = {}
+    if "ingested_tickers" not in st.session_state:
+        st.session_state["ingested_tickers"] = []
 
     with st.form("live_ingestion"):
         ticker_text = st.text_input("Ticker", value="FPT", help="Có thể nhập nhiều mã, phân cách bằng dấu phẩy.")
@@ -29,6 +34,15 @@ def render() -> None:
                 try:
                     result = run_pipeline(tickers, start_date.isoformat(), end_date.isoformat(), interval)
                     st.session_state["last_pipeline_result"] = result
+                    
+                    for item in result["ingestion"]["details"]:
+                        if item["status"] == "PASS":
+                            t = item["ticker"]
+                            if t not in st.session_state["ingested_tickers"]:
+                                st.session_state["ingested_tickers"].append(t)
+                            if t in st.session_state["preview_cache"]:
+                                del st.session_state["preview_cache"][t]
+                                
                     st.cache_data.clear()
                 except ApiClientError as error:
                     st.error(str(error))
@@ -46,11 +60,53 @@ def render() -> None:
     st.caption(f"Raw file: {ingestion['raw_path']}")
     st.dataframe(pd.DataFrame(ingestion["details"]), width="stretch", hide_index=True)
 
-    successful = [item["ticker"] for item in ingestion["details"] if item["status"] == "PASS"]
-    if successful:
-        selected = st.selectbox("Preview dữ liệu qua consumption API", successful)
+    if st.session_state["ingested_tickers"]:
+        selected = st.selectbox("Preview dữ liệu qua consumption API", st.session_state["ingested_tickers"])
         try:
-            preview = pd.DataFrame(get_prices(selected, limit=1000)["data"])
-            st.dataframe(preview.tail(20), width="stretch", hide_index=True)
+            if selected not in st.session_state["preview_cache"]:
+                payload = get_prices(
+                    selected, 
+                    start_date.isoformat(), 
+                    end_date.isoformat(), 
+                    limit=10000
+                )["data"]
+                st.session_state["preview_cache"][selected] = pd.DataFrame(payload)
+
+            preview = st.session_state["preview_cache"][selected]
+            
+            if preview.empty:
+                st.info("Không có dữ liệu cho khoảng thời gian này.")
+            else:
+                rows_per_page = 15
+                total_rows = len(preview)
+                total_pages = math.ceil(total_rows / rows_per_page)
+
+                if "explorer_page" not in st.session_state:
+                    st.session_state.explorer_page = 1
+
+                if st.session_state.explorer_page > total_pages:
+                    st.session_state.explorer_page = 1
+
+                col_prev, col_page_info, col_next = st.columns([1, 2, 1])
+                
+                with col_prev:
+                    if st.button("⬅️ Trang trước") and st.session_state.explorer_page > 1:
+                        st.session_state.explorer_page -= 1
+                        st.rerun() 
+                        
+                with col_page_info:
+                    st.write(f"Trang {st.session_state.explorer_page} / {total_pages} (Tổng: {total_rows} dòng)")
+                    
+                with col_next:
+                    if st.button("Trang tiếp ➡️") and st.session_state.explorer_page < total_pages:
+                        st.session_state.explorer_page += 1
+                        st.rerun()
+
+                start_idx = (st.session_state.explorer_page - 1) * rows_per_page
+                end_idx = start_idx + rows_per_page
+                paged_preview = preview.iloc[start_idx:end_idx]
+                
+                st.dataframe(paged_preview, width="stretch", hide_index=True)
+
         except ApiClientError as error:
             st.error(str(error))
