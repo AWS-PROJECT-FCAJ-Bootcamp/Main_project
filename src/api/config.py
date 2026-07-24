@@ -1,9 +1,5 @@
-from pydantic_settings import BaseSettings, SettingsConfigDict
+"""Compatibility import for the shared project settings."""
 
-class Settings(BaseSettings):
-    app_name: str = "Data Platform API"
-    environment: str = "local"
-    data_path: str = "src/api/data/dummy_prices.parquet"
-    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
+from src.settings import Settings, get_settings, settings
 
-settings = Settings()
+__all__ = ["Settings", "get_settings", "settings"]

@@ -7,7 +7,7 @@ def render():
         with st.container(border=True):
             st.text_input("Email")
             st.text_input("Password", type="password")
-            st.button("Register & Login", use_container_width=True, type="primary")
+            st.button("Register & Login", width="stretch", type="primary")
             
             if st.button("Back to Login"):
                 st.session_state.show_register = False

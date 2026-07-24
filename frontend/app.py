@@ -110,7 +110,7 @@ if st.session_state.authenticated:
         """, unsafe_allow_html=True)
 
     with col_user:
-        with st.popover("👤 Account", use_container_width=True):
+        with st.popover("👤 Account", width="stretch"):
             st.markdown("### 👤 User Profile")
             st.markdown("Terminal ID: <span class='mono-data' style='color: #2563eb; font-weight: bold;'>#X9-FSD</span>", unsafe_allow_html=True)
             st.divider()
@@ -126,7 +126,7 @@ if st.session_state.authenticated:
             st.divider()
             
             # Khôi phục type="primary" để CSS nhận diện và thêm icon cửa cho trực quan
-            if st.button("🚪 Log out", type="primary", use_container_width=True):
+            if st.button("🚪 Log out", type="primary", width="stretch"):
                 logout()
 
     st.markdown("<hr style='border-color: #e2e8f0; margin: 10px 0;'>", unsafe_allow_html=True)

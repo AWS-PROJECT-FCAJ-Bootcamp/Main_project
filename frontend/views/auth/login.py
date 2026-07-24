@@ -8,7 +8,7 @@ def render():
         with st.container(border=True):
             st.text_input("Username")
             st.text_input("Password", type="password")
-            if st.button("Sign In", use_container_width=True, type="primary"):
+            if st.button("Sign In", width="stretch", type="primary"):
                 login_user()
             
             if st.button("Create an account"):

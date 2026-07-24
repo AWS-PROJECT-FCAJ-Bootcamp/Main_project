@@ -6,5 +6,5 @@ secondaryBackgroundColor = "#ffffff" # White cho sidebar
 textColor = "#0f172a" # Slate 900
 font = "sans serif"
 
-[layout]
-max_width = "100%"
+[browser]
+gatherUsageStats = false
