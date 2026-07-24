@@ -79,6 +79,10 @@ Compose chạy theo thứ tự:
 2. `backend` chỉ khởi động sau khi bootstrap thành công.
 3. `frontend` chỉ khởi động sau khi backend healthcheck thành công.
 
+Frontend dùng Arrow `system` memory allocator để tránh lỗi native khi Streamlit
+serialize `st.dataframe` nhiều lần. Compose cũng kiểm tra
+`/_stcore/health` và tự khởi động lại frontend nếu tiến trình thoát bất thường.
+
 Dừng hệ thống:
 
 ```bash
@@ -111,6 +115,14 @@ uv run uvicorn src.api.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
 ```bash
+ARROW_DEFAULT_MEMORY_POOL=system PYTHONFAULTHANDLER=1 uv run streamlit run frontend/app.py --server.port 8501
+```
+
+Trên PowerShell, đặt biến môi trường trước khi chạy frontend:
+
+```powershell
+$env:ARROW_DEFAULT_MEMORY_POOL = "system"
+$env:PYTHONFAULTHANDLER = "1"
 uv run streamlit run frontend/app.py --server.port 8501
 ```
 
@@ -168,6 +180,10 @@ docker compose config
 ```
 
 Bộ test được chia theo Pipeline unit, API unit/integration, Streamlit user flow và local latency. Mỗi lần chạy sinh báo cáo JSON/CSV trong `reports/tests/`; GitHub Actions còn xuất JUnit và coverage XML. Xem lệnh chạy từng partition, traceability matrix và các gap chưa thể tự động hóa tại [docs/testing.md](docs/testing.md).
+
+Regression test frontend chạy nhiều lần Arrow IPC serialization trong tiến trình
+con. Nếu thư viện native segmentation fault, pytest nhận mã thoát khác `0` thay
+vì làm chết toàn bộ test runner.
 
 Bootstrap hiện được xác minh với raw evidence gồm 25.703 record của 100 ticker. Con số có thể thay đổi khi raw runtime mới được ingest.
 

@@ -24,6 +24,11 @@ def test_compose_declares_ordered_vertical_slice():
     )
     assert services["frontend"]["depends_on"]["backend"]["condition"] == "service_healthy"
     assert services["frontend"]["environment"]["API_BASE_URL"] == "http://backend:8000"
+    assert services["frontend"]["environment"]["ARROW_DEFAULT_MEMORY_POOL"] == "system"
+    assert services["frontend"]["environment"]["PYTHONFAULTHANDLER"] == "1"
+    assert services["frontend"]["healthcheck"]["test"][0:2] == ["CMD", "python"]
+    assert services["frontend"]["restart"] == "unless-stopped"
+    assert services["frontend"]["init"] is True
     assert services["pipeline"]["environment"]["DATA_PROVIDER"] == "VNSTOCK_FREE"
     assert services["backend"]["environment"]["VNSTOCK_REQUESTS_PER_MINUTE"] == 60
     assert services["backend"]["healthcheck"]["test"][0:2] == ["CMD", "python"]
