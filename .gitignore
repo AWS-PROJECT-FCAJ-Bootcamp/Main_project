@@ -1,0 +1,11 @@
+react-frontend
+node_modules
+package-lock.json
+
+data
+
+.env
+
+src/
+
+.venv/
