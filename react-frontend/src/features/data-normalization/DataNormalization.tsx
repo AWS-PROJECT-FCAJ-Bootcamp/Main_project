@@ -139,7 +139,7 @@ export const DataNormalization: React.FC = () => {
   const [normalizedSuccess, setNormalizedSuccess] = useState(false);
 
   // Queries
-  const { data: apiMappings } = useQuery({
+  const { data: apiMappings } = useQuery<any>({
     queryKey: ['metric-mappings'],
     queryFn: getMetricMappings,
   });
@@ -150,7 +150,7 @@ export const DataNormalization: React.FC = () => {
     }
   }, [apiMappings]);
 
-  const { data: apiQualityReport } = useQuery({
+  const { data: apiQualityReport } = useQuery<any>({
     queryKey: ['quality-report'],
     queryFn: getDataQualityReport,
   });

@@ -13,10 +13,15 @@ COPY pyproject.toml uv.lock README.md ./
 RUN uv sync --frozen --no-dev
 
 COPY src ./src
-COPY frontend ./frontend
+COPY scripts ./scripts
+COPY data_source_ingestion ./data_source_ingestion
 COPY universe ./universe
 COPY reports/raw ./reports/raw
 
-EXPOSE 8000
-CMD ["uvicorn", "src.api.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Create data directories
+RUN mkdir -p /app/data/raw/financial_reports /app/data/curated/ohlcv /app/data/models
 
+EXPOSE 8000
+
+# Entrypoint: seed admin then start server
+CMD ["sh", "-c", "python scripts/seed_admin.py && uvicorn src.api.main:app --host 0.0.0.0 --port 8000"]

@@ -100,7 +100,6 @@ export const FinancialStatements: React.FC = () => {
     status: 'SUCCESS' | 'RETRY' | 'FAILED';
     details: string;
   }>>([]);
-
   // Fetch listed companies for selector
   const { data: companiesData } = useQuery({
     queryKey: ['companies-financial-dropdown'],

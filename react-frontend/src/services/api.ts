@@ -1,38 +1,138 @@
+/**
+ * API service layer — axios client + typed wrappers.
+ *
+ * Auth: JWT Bearer injected automatically via request interceptor.
+ * On 401: clears auth store + redirects to /login.
+ */
 import axios, { AxiosError } from 'axios';
+import type { InternalAxiosRequestConfig } from 'axios';
+import { useAuthStore } from '../store/authStore';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
 
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 30000,
+  timeout: 30_000,
+  withCredentials: true,   // send cookies (refresh_token HttpOnly cookie)
 });
 
 export class ApiClientError extends Error {
-  constructor(message: string) {
+  statusCode?: number;
+  detail?: string;
+
+  constructor(
+    message: string,
+    statusCode?: number,
+    detail?: string
+  ) {
     super(message);
     this.name = 'ApiClientError';
+    this.statusCode = statusCode;
+    this.detail = detail;
   }
 }
 
+// ─── Request interceptor: inject Bearer token ─────────────────────────────────
+apiClient.interceptors.request.use((config: InternalAxiosRequestConfig) => {
+  const token = useAuthStore.getState().accessToken;
+  if (token && config.headers) {
+    config.headers['Authorization'] = `Bearer ${token}`;
+  }
+  return config;
+});
+
+// ─── Response interceptor: extract .data + handle errors ──────────────────────
 apiClient.interceptors.response.use(
   (response) => response.data,
-  (error: AxiosError) => {
-    let detail = '';
-    if (error.response?.data) {
-      const data = error.response.data as any;
-      detail = `: ${data.detail || JSON.stringify(data)}`;
-    } else {
-      detail = `: ${error.message}`;
+  async (error: AxiosError) => {
+    const status = error.response?.status;
+    const data = error.response?.data as any;
+    const detail = data?.detail ?? error.message;
+
+    // 401 → clear auth + redirect to login
+    if (status === 401) {
+      useAuthStore.getState().clearAuth();
+      if (typeof window !== 'undefined' && !window.location.pathname.startsWith('/login')) {
+        window.location.replace('/login');
+      }
     }
-    throw new ApiClientError(`Backend request failed (${error.config?.method?.toUpperCase()} ${error.config?.url})${detail}`);
+
+    throw new ApiClientError(
+      `[${error.config?.method?.toUpperCase()} ${error.config?.url}] ${detail}`,
+      status,
+      detail
+    );
   }
 );
 
-// --- API Functions ---
+// ─── Auth ─────────────────────────────────────────────────────────────────────
 
-export const getHealth = async (): Promise<any> => {
-  return apiClient.get('/health', { timeout: 5000 });
+export interface LoginPayload { full_name: string; password: string }
+export interface RegisterPayload { full_name: string; password: string }
+export interface TokenResponse { access_token: string; token_type: string; role: string }
+export interface AuthUser { id: string; full_name: string; role: string; created_at: string }
+
+export const authApi = {
+  login: (payload: LoginPayload): Promise<TokenResponse> =>
+    apiClient.post('/auth/login', payload),
+
+  register: (payload: RegisterPayload): Promise<{ message: string; user_id: string; role: string }> =>
+    apiClient.post('/auth/register', payload),
+
+  me: (): Promise<AuthUser> =>
+    apiClient.get('/auth/me'),
+
+  logout: (): Promise<void> =>
+    apiClient.post('/auth/logout'),
+
+  refresh: (): Promise<TokenResponse> =>
+    apiClient.post('/auth/refresh'),
 };
+
+// ─── Admin ────────────────────────────────────────────────────────────────────
+
+export interface UserSummary {
+  id: string; full_name: string;
+  role: string; created_at: string;
+}
+export interface AdminStats {
+  total_users: number; admin_users: number; guest_users: number;
+  total_pipeline_jobs: number;
+  total_ml_jobs: number; total_records_ingested: number;
+}
+
+export const adminApi = {
+  listUsers: (params?: { role?: string }): Promise<UserSummary[]> =>
+    apiClient.get('/admin/users', { params }),
+
+  deleteUser: (userId: string): Promise<void> =>
+    apiClient.delete(`/admin/users/${userId}`),
+
+  getStats: (): Promise<AdminStats> =>
+    apiClient.get('/admin/stats'),
+};
+
+// ─── Health ───────────────────────────────────────────────────────────────────
+
+export const getHealth = async (): Promise<any> =>
+  apiClient.get('/health', { timeout: 5_000 });
+
+// ─── Data Normalization ───────────────────────────────────────────────────────
+
+export const getMetricMappings = async (): Promise<any> =>
+  apiClient.get('/data-normalization/mappings');
+
+export const getDataQualityReport = async (): Promise<any> =>
+  apiClient.get('/data-normalization/quality-report');
+
+export const runDataNormalization = async (config: {
+  minYears: number;
+  winsorizePct: number;
+  targetUnit: string;
+}): Promise<any> =>
+  apiClient.post('/data-normalization/run', config, { timeout: 180_000 });
+
+// ─── Companies ────────────────────────────────────────────────────────────────
 
 export const getCompanies = async (
   limit = 1000,
@@ -47,6 +147,8 @@ export const getCompanies = async (
   return apiClient.get('/companies', { params });
 };
 
+// ─── Prices ───────────────────────────────────────────────────────────────────
+
 export const getPrices = async (
   ticker: string,
   startDate?: string,
@@ -59,96 +161,60 @@ export const getPrices = async (
   return apiClient.get('/prices', { params });
 };
 
+// ─── Pipeline ─────────────────────────────────────────────────────────────────
+
 export const runPipeline = async (
   tickers: string[],
   startDate: string,
   endDate: string,
   interval = '1D'
-): Promise<any> => {
-  return apiClient.post(
-    '/pipeline/run',
-    {
-      tickers,
-      start_date: startDate,
-      end_date: endDate,
-      interval,
-    },
-    { timeout: 180000 }
-  );
-};
+): Promise<any> =>
+  apiClient.post('/pipeline/run', { tickers, start_date: startDate, end_date: endDate, interval }, { timeout: 180_000 });
+
+// ─── Financial Reports ────────────────────────────────────────────────────────
 
 export const getFinancialReport = async (
   ticker: string,
   periodType: 'YEARLY' | 'QUARTERLY' = 'YEARLY'
-): Promise<any> => {
-  return apiClient.get(`/financial-reports/${ticker}`, {
-    params: { period_type: periodType },
-  });
-};
+): Promise<any> =>
+  apiClient.get(`/financial-reports/${ticker}`, { params: { period_type: periodType } });
 
 export const ingestFinancialReports = async (
   tickers: string[],
   startYear: number,
   endYear: number,
   reportTypes = ['BALANCE_SHEET', 'INCOME_STATEMENT', 'CASH_FLOW']
-): Promise<any> => {
-  return apiClient.post(
-    '/financial-reports/ingest',
-    {
-      tickers,
-      start_year: startYear,
-      end_year: endYear,
-      report_types: reportTypes,
-    },
-    { timeout: 180000 }
-  );
-};
+): Promise<any> =>
+  apiClient.post('/financial-reports/ingest', { tickers, start_year: startYear, end_year: endYear, report_types: reportTypes }, { timeout: 180_000 });
 
-export const getMetricMappings = async (): Promise<any> => {
-  return apiClient.get('/data-processing/metric-mappings');
-};
+// ─── Financial Ratios ─────────────────────────────────────────────────────────
 
-export const getDataQualityReport = async (): Promise<any> => {
-  return apiClient.get('/data-processing/quality-report');
-};
+export const getFinancialRatios = async (ticker: string): Promise<any> =>
+  apiClient.get(`/financial-ratios/${ticker}`);
 
-export const runDataNormalization = async (config: {
-  minYears: number;
-  winsorizePct: number;
-  targetUnit: string;
-}): Promise<any> => {
-  return apiClient.post('/data-processing/normalize', config);
-};
+export const calculateFinancialRatios = async (tickers: string[]): Promise<any> =>
+  apiClient.post('/financial-ratios/calculate', { tickers }, { timeout: 180_000 });
 
-export const getFinancialRatios = async (ticker: string): Promise<any> => {
-  return apiClient.get(`/financial-ratios/${ticker}`);
-};
+// ─── Distress ─────────────────────────────────────────────────────────────────
 
-export const calculateFinancialRatios = async (tickers: string[]): Promise<any> => {
-  return apiClient.post('/financial-ratios/calculate', { tickers }, { timeout: 180000 });
-};
-
-export const getDistressLabels = async (ticker: string): Promise<any> => {
-  return apiClient.get(`/distress-labeling/${ticker}`);
-};
+export const getDistressLabels = async (ticker: string): Promise<any> =>
+  apiClient.get(`/distress-labeling/${ticker}`);
 
 export const runDistressLabelingEngine = async (config: {
   method: 'RULE_BASED' | 'Z_SCORE' | 'HYBRID';
   zThreshold: number;
-}): Promise<any> => {
-  return apiClient.post('/distress-labeling/run', config);
-};
+}): Promise<any> =>
+  apiClient.post('/distress-labeling/run', config);
 
-export const getDatasetPreview = async (): Promise<any> => {
-  return apiClient.get('/dataset/preview');
-};
+// ─── Dataset ──────────────────────────────────────────────────────────────────
 
-export const exportDatasetFile = async (format: 'CSV' | 'EXCEL' | 'PARQUET'): Promise<any> => {
-  return apiClient.get('/dataset/export', {
-    params: { format },
-    responseType: 'blob',
-  });
-};
+export const getDatasetPreview = async (page = 1, pageSize = 50): Promise<any> =>
+  apiClient.get('/dataset/preview', { params: { page, page_size: pageSize } });
+
+export const exportDatasetFile = async (format: 'CSV' | 'EXCEL' | 'PARQUET'): Promise<any> =>
+  apiClient.get('/dataset/export', { params: { format }, responseType: 'blob' });
+
+// ─── ML / AI Models ───────────────────────────────────────────────────────────
 
 export const trainModel = async (config: {
   model_type: string;
@@ -157,14 +223,31 @@ export const trainModel = async (config: {
   test_start_year: number;
   test_end_year: number;
   handle_imbalance: boolean;
-}): Promise<any> => {
-  return apiClient.post('/ai-models/train', config, { timeout: 180000 });
+}): Promise<any> =>
+  apiClient.post('/ai-models/train', config, { timeout: 180_000 });
+
+export const getModelEvaluation = async (modelType: string): Promise<any> =>
+  apiClient.get(`/ai-models/evaluation/${modelType}`);
+
+// ─── ML Jobs (Sprint 5) ───────────────────────────────────────────────────────
+
+export const mlJobsApi = {
+  list: (): Promise<any[]> => apiClient.get('/ml/jobs'),
+  submit: (config: any): Promise<any> => apiClient.post('/ml/jobs', config),
+  get: (jobId: string): Promise<any> => apiClient.get(`/ml/jobs/${jobId}`),
 };
 
-export const getModelEvaluation = async (modelType: string): Promise<any> => {
-  return apiClient.get(`/ai-models/evaluation/${modelType}`);
-};
+// ─── Prediction ───────────────────────────────────────────────────────────────
 
-export const getDistressPrediction = async (ticker: string): Promise<any> => {
-  return apiClient.get(`/prediction/${ticker}`);
+export const getDistressPrediction = async (ticker: string): Promise<any> =>
+  apiClient.get(`/prediction/${ticker}`);
+
+// ─── Sessions ─────────────────────────────────────────────────────────────────
+
+export const sessionsApi = {
+  list: (): Promise<any[]> => apiClient.get('/sessions'),
+  create: (data: { name: string; description?: string; params: any }): Promise<any> =>
+    apiClient.post('/sessions', data),
+  get: (id: string): Promise<any> => apiClient.get(`/sessions/${id}`),
+  delete: (id: string): Promise<void> => apiClient.delete(`/sessions/${id}`),
 };

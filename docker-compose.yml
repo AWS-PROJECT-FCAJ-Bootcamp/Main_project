@@ -8,7 +8,34 @@ x-app: &app
   volumes:
     - ./data:/app/data
 
+x-db-env: &db-env
+  POSTGRES_DB: financial_platform
+  POSTGRES_USER: app_user
+  POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme_local}
+
 services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      <<: *db-env
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U app_user -d financial_platform"]
+      interval: 5s
+      timeout: 4s
+      retries: 12
+    restart: unless-stopped
+
+  mailhog:
+    image: mailhog/mailhog:latest
+    ports:
+      - "1025:1025"   # SMTP
+      - "8025:8025"   # Web UI
+    restart: unless-stopped
+
   pipeline:
     <<: *app
     build:
@@ -22,11 +49,14 @@ services:
       RAW_DATA_DIR: data/raw/ohlcv
       CURATED_DATA_DIR: data/curated/ohlcv
       SEED_RAW_DATA_DIR: reports/raw/ohlcv
+    depends_on:
+      postgres:
+        condition: service_healthy
     restart: "no"
 
   backend:
     <<: *app
-    command: ["uvicorn", "src.api.main:app", "--host", "0.0.0.0", "--port", "8000"]
+    command: ["uvicorn", "src.api.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
     environment:
       ENVIRONMENT: docker
       DATA_PROVIDER: VNSTOCK_FREE
@@ -34,12 +64,30 @@ services:
       RAW_DATA_DIR: data/raw/ohlcv
       CURATED_DATA_DIR: data/curated/ohlcv
       SEED_RAW_DATA_DIR: reports/raw/ohlcv
-      CORS_ORIGINS: "http://localhost:8501,http://localhost:5173"
+      CORS_ORIGINS: "http://localhost:8501,http://localhost:5173,http://localhost:80,http://localhost,http://127.0.0.1:5173"
+      # Database
+      DATABASE_URL: "postgresql+asyncpg://app_user:${POSTGRES_PASSWORD:-changeme_local}@postgres:5432/financial_platform"
+      # JWT
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:-super_secret_dev_key_change_in_prod}
+      JWT_ALGORITHM: HS256
+      JWT_ACCESS_TOKEN_EXPIRE_MINUTES: 60
+      JWT_REFRESH_TOKEN_EXPIRE_DAYS: 30
+      # Email (Mailhog local)
+      SMTP_HOST: mailhog
+      SMTP_PORT: 1025
+      SMTP_TLS: "false"
+      SMTP_USER: ""
+      SMTP_PASSWORD: ""
+      EMAIL_FROM: "noreply@financial-platform.local"
+      # AWS (placeholders — fill in .env for cloud)
+      AWS_REGION: "ap-southeast-1"
+      AWS_PROFILE: ${AWS_PROFILE:-default}
+      SES_FROM_EMAIL: ${SES_FROM_EMAIL:-your-email@example.com}
     ports:
       - "8000:8000"
     depends_on:
-      pipeline:
-        condition: service_completed_successfully
+      postgres:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health', timeout=3)"]
       interval: 5s
@@ -50,6 +98,8 @@ services:
     build:
       context: ./react-frontend
       dockerfile: Dockerfile
+      args:
+        VITE_API_BASE_URL: http://localhost:8000
     ports:
       - "5173:80"
     depends_on:
@@ -63,3 +113,5 @@ services:
       start_period: 5s
     restart: unless-stopped
 
+volumes:
+  postgres_data:

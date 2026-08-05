@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { useAuthStore } from './authStore';
 
 interface AppState {
   isAuthenticated: boolean;
@@ -14,6 +15,16 @@ export const useAppStore = create<AppState>((set) => ({
   username: null,
   datasetCount: 0,
   login: (username) => set({ isAuthenticated: true, username }),
-  logout: () => set({ isAuthenticated: false, username: null }),
+  logout: () => {
+    useAuthStore.getState().clearAuth();
+    set({ isAuthenticated: false, username: null });
+  },
   setDatasetCount: (count) => set({ datasetCount: count }),
 }));
+
+useAuthStore.subscribe((state) => {
+  useAppStore.setState({
+    isAuthenticated: state.isAuthenticated,
+    username: state.user?.full_name || null,
+  });
+});

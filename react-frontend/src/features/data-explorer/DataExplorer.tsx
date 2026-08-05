@@ -18,6 +18,8 @@ const StatusBadge: React.FC<{ status: string }> = ({ status }) => (
     : <span className="badge-red"><XCircle size={10} /> FAIL</span>
 );
 
+
+
 export const DataExplorer: React.FC = () => {
   const [pipelineResult, setPipelineResult] = useState<PipelineResult | null>(null);
   const [isIngesting, setIsIngesting] = useState(false);
@@ -45,7 +47,7 @@ export const DataExplorer: React.FC = () => {
     try {
       const result = await runPipeline(tickers, data.startDate, data.endDate, data.interval);
       setPipelineResult(result);
-      const passed = result.ingestion.details.filter((d: any) => d.status === 'PASS').map((d: any) => d.ticker);
+      const passed = result.ingestion?.details?.filter((d: any) => d.status === 'PASS').map((d: any) => d.ticker) ?? [];
       setIngestedTickers((prev) => Array.from(new Set([...prev, ...passed])));
       if (passed.length > 0 && !previewTicker) setPreviewTicker(passed[0]);
     } catch (err: any) {
@@ -57,6 +59,7 @@ export const DataExplorer: React.FC = () => {
 
   useEffect(() => {
     if (!previewTicker) return;
+
     setIsLoadingPreview(true);
     getPrices(previewTicker, undefined, undefined, 100)
       .then((res) => setPreviewData(res.data ?? []))

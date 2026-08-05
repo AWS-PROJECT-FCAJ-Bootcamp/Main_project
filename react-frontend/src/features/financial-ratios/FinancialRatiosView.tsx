@@ -51,9 +51,9 @@ export const FinancialRatiosView: React.FC = () => {
   const [isCalculating, setIsCalculating] = useState(false);
   const [calcSuccess, setCalcSuccess] = useState(false);
 
-  // Fetch listed companies
+  // Fetch listed companies for selector
   const { data: companiesData } = useQuery({
-    queryKey: ['companies-ratios-dropdown'],
+    queryKey: ['companies-ratio-dropdown'],
     queryFn: () => getCompanies(100),
   });
 

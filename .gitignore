@@ -55,5 +55,6 @@ Thumbs.db
 *.tfstate.*
 .terraform.lock.hcl
 crash.log
+./frontend
 
 .agents/
