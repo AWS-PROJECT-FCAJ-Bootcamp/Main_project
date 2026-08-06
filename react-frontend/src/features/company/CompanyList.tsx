@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
   Building2,
@@ -8,6 +8,10 @@ import {
   RefreshCw,
   Info,
   SlidersHorizontal,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
 } from 'lucide-react';
 import { getCompanies } from '../../services/api';
 import type { Company } from '../../types';
@@ -35,29 +39,49 @@ const DEFAULT_COMPANIES: Company[] = [
 
 export const CompanyList: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   const [selectedExchange, setSelectedExchange] = useState<string>('ALL');
   const [selectedIndustry, setSelectedIndustry] = useState<string>('ALL');
   const [excludeFinancial, setExcludeFinancial] = useState<boolean>(true); // Default TRUE per spec
 
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [pageSize, setPageSize] = useState<number>(15);
+
+  // Debounce search input by 300ms to optimize API requests
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 300);
+    return () => clearTimeout(handler);
+  }, [searchTerm]);
+
   const { data: apiData, isLoading, refetch } = useQuery({
-    queryKey: ['companies-full'],
-    queryFn: () => getCompanies(1000),
+    queryKey: ['companies', currentPage, pageSize, debouncedSearchTerm, selectedExchange, selectedIndustry, excludeFinancial],
+    queryFn: () => getCompanies(currentPage, pageSize, debouncedSearchTerm, selectedExchange, selectedIndustry, excludeFinancial),
   });
 
   const rawCompanies: Company[] = useMemo(() => {
     const list = apiData?.data ?? [];
-    if (list.length === 0) return DEFAULT_COMPANIES;
+    if (list.length === 0 && !apiData) return DEFAULT_COMPANIES;
     return list.map((c: Company) => {
-      const ind = (c.industry || '').toLowerCase();
+      const exchange = c.exchange || c.market || 'HOSE';
+      const industry = c.industry || c.sector || 'Chưa phân loại';
+      const ind = industry.toLowerCase();
       const isFin = c.is_financial ?? (
         ind.includes('ngân hàng') ||
         ind.includes('chứng khoán') ||
         ind.includes('bảo hiểm') ||
         ind.includes('tài chính') ||
-        ind.includes('quỹ')
+        ind.includes('quỹ') ||
+        ind.includes('bank') ||
+        ind.includes('financial')
       );
       return {
         ...c,
+        name: c.name || `CTCP ${c.ticker}`,
+        exchange,
+        industry,
         is_financial: isFin,
         sector: isFin ? 'Tài chính' : 'Phi tài chính',
         status: c.status || 'LISTED',
@@ -65,40 +89,51 @@ export const CompanyList: React.FC = () => {
     });
   }, [apiData]);
 
-  // Unique industries list
+  // Unique industries list from current or default
   const industries = useMemo(() => {
-    const set = new Set<string>();
+    const set = new Set<string>([
+      'Công nghệ thông tin', 'Thực phẩm & Đồ uống', 'Thép & Vật liệu xây dựng',
+      'Ngân hàng', 'Dịch vụ Tài chính & Chứng khoán', 'Bảo hiểm', 'Bán lẻ',
+      'Bất động sản', 'Hàng tiêu dùng', 'Năng lượng & Cơ điện', 'Dầu khí',
+      'Vận tải & Cảng hàng không', 'Chemicals', 'Health Care', 'Utilities', 'Industrial Goods & Services'
+    ]);
     rawCompanies.forEach((c) => {
       if (c.industry) set.add(c.industry);
     });
     return Array.from(set).sort();
   }, [rawCompanies]);
 
-  // Filtering logic
-  const filteredCompanies = useMemo(() => {
-    return rawCompanies.filter((c) => {
-      if (searchTerm) {
-        const term = searchTerm.toLowerCase();
-        const matchesTicker = c.ticker.toLowerCase().includes(term);
-        const matchesName = c.name.toLowerCase().includes(term);
-        if (!matchesTicker && !matchesName) return false;
-      }
-      if (selectedExchange !== 'ALL' && c.exchange !== selectedExchange) {
-        return false;
-      }
-      if (selectedIndustry !== 'ALL' && c.industry !== selectedIndustry) {
-        return false;
-      }
-      if (excludeFinancial && c.is_financial) {
-        return false;
-      }
-      return true;
-    });
-  }, [rawCompanies, searchTerm, selectedExchange, selectedIndustry, excludeFinancial]);
+  // Reset page to 1 when filters or search change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [debouncedSearchTerm, selectedExchange, selectedIndustry, excludeFinancial, pageSize]);
 
-  const totalRaw = rawCompanies.length;
+  const totalRecords = apiData?.total_records ?? rawCompanies.length;
+  const totalRaw = totalRecords;
   const financialCount = rawCompanies.filter((c) => c.is_financial).length;
-  const filteredCount = filteredCompanies.length;
+  const filteredCount = totalRecords;
+  const filteredCompanies = rawCompanies;
+
+  // Server-side pagination calculation
+  const totalPages = Math.ceil(totalRecords / pageSize) || 1;
+  const startIndex = (currentPage - 1) * pageSize;
+  const endIndex = Math.min(startIndex + filteredCompanies.length, totalRecords);
+  const paginatedCompanies = filteredCompanies;
+
+  // Generate page numbers for pagination bar
+  const pageNumbers = useMemo(() => {
+    const pages: number[] = [];
+    const maxVisible = 5;
+    let start = Math.max(1, currentPage - Math.floor(maxVisible / 2));
+    let end = Math.min(totalPages, start + maxVisible - 1);
+    if (end - start + 1 < maxVisible) {
+      start = Math.max(1, end - maxVisible + 1);
+    }
+    for (let i = start; i <= end; i++) {
+      pages.push(i);
+    }
+    return pages;
+  }, [currentPage, totalPages]);
 
   return (
     <div className="p-6 space-y-6 max-w-screen-xl mx-auto">
@@ -245,12 +280,30 @@ export const CompanyList: React.FC = () => {
 
       {/* ── Company Table ── */}
       <div className="bg-white rounded-xl border border-slate-200/80 shadow-sm overflow-hidden">
-        <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+        <div className="px-5 py-4 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50/50">
           <h2 className="text-sm font-semibold text-slate-800 flex items-center gap-2">
             <Building2 size={16} className="text-indigo-500" />
             Bảng danh sách doanh nghiệp ({filteredCount})
           </h2>
-          <span className="text-xs text-slate-400">Hiển thị {filteredCount} dòng</span>
+          <div className="flex items-center gap-3 text-xs text-slate-500">
+            <span>
+              Hiển thị {filteredCount > 0 ? startIndex + 1 : 0} - {endIndex} trên {filteredCount} dòng
+            </span>
+            <div className="flex items-center gap-1.5">
+              <span>Hiển thị:</span>
+              <select
+                value={pageSize}
+                onChange={(e) => setPageSize(Number(e.target.value))}
+                className="bg-white border border-slate-200 rounded px-2 py-1 text-xs font-medium text-slate-700 focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer"
+              >
+                <option value={10}>10 dòng/trang</option>
+                <option value={15}>15 dòng/trang</option>
+                <option value={25}>25 dòng/trang</option>
+                <option value={50}>50 dòng/trang</option>
+                <option value={100}>100 dòng/trang</option>
+              </select>
+            </div>
+          </div>
         </div>
 
         {filteredCount === 0 ? (
@@ -260,54 +313,119 @@ export const CompanyList: React.FC = () => {
             <p className="text-xs text-slate-400">Thử thay đổi từ khóa tìm kiếm hoặc điều chỉnh lại bộ lọc sàn/ngành.</p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left">
-              <thead>
-                <tr>
-                  <th className="table-header">Mã CK</th>
-                  <th className="table-header">Tên doanh nghiệp</th>
-                  <th className="table-header">Sàn</th>
-                  <th className="table-header">Ngành nghề</th>
-                  <th className="table-header">Phân loại</th>
-                  <th className="table-header text-right">Trạng thái</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredCompanies.map((c) => (
-                  <tr key={c.ticker} className="table-row">
-                    <td className="table-cell font-mono font-bold text-indigo-700">{c.ticker}</td>
-                    <td className="table-cell font-medium text-slate-800">{c.name}</td>
-                    <td className="table-cell">
-                      <span className={`px-2 py-0.5 rounded text-xs font-bold ${
-                        c.exchange === 'HOSE' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' :
-                        c.exchange === 'HNX' ? 'bg-blue-50 text-blue-700 border border-blue-200' :
-                        'bg-slate-100 text-slate-700 border border-slate-200'
-                      }`}>
-                        {c.exchange || 'N/A'}
-                      </span>
-                    </td>
-                    <td className="table-cell text-slate-600">{c.industry || '—'}</td>
-                    <td className="table-cell">
-                      {c.is_financial ? (
-                        <span className="badge-amber flex items-center gap-1 w-max">
-                          <AlertTriangle size={10} /> Tài chính
-                        </span>
-                      ) : (
-                        <span className="badge-green flex items-center gap-1 w-max">
-                          <CheckCircle2 size={10} /> Phi tài chính
-                        </span>
-                      )}
-                    </td>
-                    <td className="table-cell text-right font-medium">
-                      <span className="inline-flex items-center gap-1 text-xs text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md font-semibold">
-                        ● {c.status}
-                      </span>
-                    </td>
+          <>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left">
+                <thead>
+                  <tr>
+                    <th className="table-header text-center w-14">STT</th>
+                    <th className="table-header">Mã CK</th>
+                    <th className="table-header">Tên doanh nghiệp</th>
+                    <th className="table-header">Sàn</th>
+                    <th className="table-header">Ngành nghề</th>
+                    <th className="table-header">Phân loại</th>
+                    <th className="table-header text-right">Trạng thái</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {paginatedCompanies.map((c, idx) => (
+                    <tr key={c.ticker} className="table-row">
+                      <td className="table-cell text-center font-mono text-xs font-semibold text-slate-400">
+                        {startIndex + idx + 1}
+                      </td>
+                      <td className="table-cell font-mono font-bold text-indigo-700">{c.ticker}</td>
+                      <td className="table-cell font-medium text-slate-800">{c.name}</td>
+                      <td className="table-cell">
+                        <span className={`px-2 py-0.5 rounded text-xs font-bold ${
+                          c.exchange === 'HOSE' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' :
+                          c.exchange === 'HNX' ? 'bg-blue-50 text-blue-700 border border-blue-200' :
+                          'bg-slate-100 text-slate-700 border border-slate-200'
+                        }`}>
+                          {c.exchange || 'N/A'}
+                        </span>
+                      </td>
+                      <td className="table-cell text-slate-600">{c.industry || '—'}</td>
+                      <td className="table-cell">
+                        {c.is_financial ? (
+                          <span className="badge-amber flex items-center gap-1 w-max">
+                            <AlertTriangle size={10} /> Tài chính
+                          </span>
+                        ) : (
+                          <span className="badge-green flex items-center gap-1 w-max">
+                            <CheckCircle2 size={10} /> Phi tài chính
+                          </span>
+                        )}
+                      </td>
+                      <td className="table-cell text-right font-medium">
+                        <span className="inline-flex items-center gap-1 text-xs text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md font-semibold">
+                          ● {c.status}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* ── Pagination Bar Footer ── */}
+            {totalPages > 1 && (
+              <div className="px-5 py-3 border-t border-slate-100 bg-slate-50/50 flex items-center justify-between gap-4">
+                <p className="text-xs text-slate-500">
+                  Trang <span className="font-semibold text-slate-800">{currentPage}</span> / <span className="font-semibold text-slate-800">{totalPages}</span>
+                </p>
+
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => setCurrentPage(1)}
+                    disabled={currentPage === 1}
+                    className="p-1.5 rounded-md text-slate-500 hover:bg-slate-200 disabled:opacity-30 disabled:hover:bg-transparent transition"
+                    title="Trang đầu"
+                  >
+                    <ChevronsLeft size={16} />
+                  </button>
+                  <button
+                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                    disabled={currentPage === 1}
+                    className="p-1.5 rounded-md text-slate-500 hover:bg-slate-200 disabled:opacity-30 disabled:hover:bg-transparent transition"
+                    title="Trang trước"
+                  >
+                    <ChevronLeft size={16} />
+                  </button>
+
+                  {pageNumbers.map((p) => (
+                    <button
+                      key={p}
+                      onClick={() => setCurrentPage(p)}
+                      className={`min-w-[32px] h-8 px-2.5 rounded-md text-xs font-semibold transition ${
+                        currentPage === p
+                          ? 'bg-indigo-600 text-white shadow-sm'
+                          : 'text-slate-600 hover:bg-slate-200'
+                      }`}
+                    >
+                      {p}
+                    </button>
+                  ))}
+
+                  <button
+                    onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                    disabled={currentPage === totalPages}
+                    className="p-1.5 rounded-md text-slate-500 hover:bg-slate-200 disabled:opacity-30 disabled:hover:bg-transparent transition"
+                    title="Trang sau"
+                  >
+                    <ChevronRight size={16} />
+                  </button>
+                  <button
+                    onClick={() => setCurrentPage(totalPages)}
+                    disabled={currentPage === totalPages}
+                    className="p-1.5 rounded-md text-slate-500 hover:bg-slate-200 disabled:opacity-30 disabled:hover:bg-transparent transition"
+                    title="Trang cuối"
+                  >
+                    <ChevronsRight size={16} />
+                  </button>
+                </div>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>

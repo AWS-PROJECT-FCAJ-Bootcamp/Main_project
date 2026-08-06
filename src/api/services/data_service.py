@@ -22,7 +22,15 @@ class DataService:
         clean = frame.astype(object).where(pd.notna(frame), None)
         return clean.to_dict(orient="records")
 
-    def get_companies(self, page: int, limit: int):
+    def get_companies(
+        self,
+        page: int,
+        limit: int,
+        search: str | None = None,
+        exchange: str | None = None,
+        industry: str | None = None,
+        exclude_financial: bool = False,
+    ):
         files = self._parquet_files()
         if not files:
             return {"data": [], "page": page, "limit": limit, "total_records": 0}
@@ -31,33 +39,47 @@ class DataService:
             row[0]
             for row in self.db.execute(f"SELECT DISTINCT ticker FROM {self._scan_expression()}").fetchall()
         }
+        meta_df = pd.DataFrame()
         if self.config.universe_file.exists():
-            companies = pd.read_csv(self.config.universe_file)
-            companies["ticker"] = companies["ticker"].astype(str).str.upper()
-            companies = companies[companies["ticker"].isin(available)]
-            companies = companies[["ticker", "name", "market", "sector"]]
-            missing_tickers = sorted(available - set(companies["ticker"]))
-            if missing_tickers:
-                companies = pd.concat(
-                    [
-                        companies,
-                        pd.DataFrame(
-                            {
-                                "ticker": missing_tickers,
-                                "name": [None] * len(missing_tickers),
-                                "market": [None] * len(missing_tickers),
-                                "sector": [None] * len(missing_tickers),
-                            }
-                        ),
-                    ],
-                    ignore_index=True,
-                )
+            meta_df = pd.read_csv(self.config.universe_file)
+        else:
+            listed_csv = self.config.resolve_path(Path("data/listed_companies.csv"))
+            if listed_csv.exists():
+                meta_df = pd.read_csv(listed_csv)
+
+        if not meta_df.empty:
+            meta_df["ticker"] = meta_df["ticker"].astype(str).str.upper()
+            if "market" not in meta_df.columns and "exchange" in meta_df.columns:
+                meta_df["market"] = meta_df["exchange"]
+            meta_df = meta_df[["ticker", "name", "market", "sector"]].drop_duplicates(subset=["ticker"])
+            
+            companies = pd.DataFrame({"ticker": sorted(available)})
+            companies = companies.merge(meta_df, on="ticker", how="left")
         else:
             companies = pd.DataFrame({"ticker": sorted(available)})
             for column in ("name", "market", "sector"):
                 companies[column] = None
 
         companies = companies.sort_values("ticker").reset_index(drop=True)
+
+        if search and search.strip():
+            s = search.strip().lower()
+            ticker_match = companies["ticker"].astype(str).str.lower().str.contains(s, na=False)
+            name_match = companies["name"].fillna("").astype(str).str.lower().str.contains(s, na=False)
+            companies = companies[ticker_match | name_match]
+
+        if exchange and exchange != "ALL":
+            companies = companies[companies["market"].fillna("").astype(str).str.upper() == exchange.upper()]
+
+        if industry and industry != "ALL":
+            companies = companies[companies["sector"].fillna("").astype(str).str.lower() == industry.lower()]
+
+        if exclude_financial:
+            fin_keywords = ["ngân hàng", "chứng khoán", "bảo hiểm", "tài chính", "quỹ", "bank", "financial"]
+            pattern = "|".join(fin_keywords)
+            is_fin = companies["sector"].fillna("").astype(str).str.lower().str.contains(pattern, regex=True)
+            companies = companies[~is_fin]
+
         total_records = len(companies)
         offset = (page - 1) * limit
         page_frame = companies.iloc[offset : offset + limit]

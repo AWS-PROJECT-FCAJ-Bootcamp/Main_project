@@ -1,12 +1,13 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Link, useNavigate } from 'react-router-dom';
-import { UserPlus, Eye, EyeOff, Loader2 } from 'lucide-react';
+import { registerApi } from '../../services/api';
+import { UserPlus, Eye, EyeOff, Loader2, AlertCircle, CheckCircle } from 'lucide-react';
 
 const registerSchema = z.object({
-  username: z.string().min(3, 'Tối thiểu 3 ký tự'),
+  fullName: z.string().min(2, 'Họ tên phải có ít nhất 2 ký tự'),
   email: z.string().email('Email không hợp lệ'),
   password: z.string().min(6, 'Tối thiểu 6 ký tự'),
   confirmPassword: z.string(),
@@ -18,15 +19,28 @@ type RegisterForm = z.infer<typeof registerSchema>;
 
 export const Register: React.FC = () => {
   const navigate = useNavigate();
-  const [showPwd, setShowPwd] = React.useState(false);
+  const [showPwd, setShowPwd] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<RegisterForm>({
     resolver: zodResolver(registerSchema),
   });
 
-  const onSubmit = async (_data: RegisterForm) => {
-    await new Promise((r) => setTimeout(r, 600));
-    navigate('/login');
+  const onSubmit = async (data: RegisterForm) => {
+    setErrorMessage(null);
+    setSuccessMessage(null);
+    try {
+      await registerApi({
+        email: data.email,
+        password: data.password,
+        full_name: data.fullName,
+      });
+      setSuccessMessage('Đăng ký thành công! Đang chuyển hướng sang trang Đăng nhập...');
+      setTimeout(() => navigate('/login'), 1500);
+    } catch (err: any) {
+      setErrorMessage(err.message || 'Đăng ký thất bại. Vui lòng thử lại với email khác.');
+    }
   };
 
   return (
@@ -42,24 +56,42 @@ export const Register: React.FC = () => {
           <p className="text-sm text-slate-500 mt-1">Điền thông tin để đăng ký hệ thống</p>
         </div>
 
+        {errorMessage && (
+          <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 text-sm rounded-xl flex items-center gap-2">
+            <AlertCircle size={16} className="shrink-0" />
+            <span>{errorMessage}</span>
+          </div>
+        )}
+
+        {successMessage && (
+          <div className="mb-4 p-3 bg-emerald-50 border border-emerald-200 text-emerald-700 text-sm rounded-xl flex items-center gap-2">
+            <CheckCircle size={16} className="shrink-0" />
+            <span>{successMessage}</span>
+          </div>
+        )}
+
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          {[
-            { name: 'username', label: 'Tên đăng nhập', type: 'text', placeholder: 'your_username' },
-            { name: 'email', label: 'Email', type: 'email', placeholder: 'you@example.com' },
-          ].map(({ name, label, type, placeholder }) => (
-            <div key={name} className="space-y-1.5">
-              <label className="text-xs font-semibold text-slate-600 uppercase tracking-wide">{label}</label>
-              <input
-                type={type}
-                {...register(name as any)}
-                placeholder={placeholder}
-                className="input-field"
-              />
-              {(errors as any)[name] && (
-                <p className="text-xs text-red-500 mt-1">{(errors as any)[name].message}</p>
-              )}
-            </div>
-          ))}
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-slate-600 uppercase tracking-wide">Họ và tên</label>
+            <input
+              type="text"
+              {...register('fullName')}
+              placeholder="Nguyễn Văn A"
+              className="input-field"
+            />
+            {errors.fullName && <p className="text-xs text-red-500 mt-1">{errors.fullName.message}</p>}
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-slate-600 uppercase tracking-wide">Email</label>
+            <input
+              type="email"
+              {...register('email')}
+              placeholder="you@example.com"
+              className="input-field"
+            />
+            {errors.email && <p className="text-xs text-red-500 mt-1">{errors.email.message}</p>}
+          </div>
 
           <div className="space-y-1.5">
             <label className="text-xs font-semibold text-slate-600 uppercase tracking-wide">Mật khẩu</label>

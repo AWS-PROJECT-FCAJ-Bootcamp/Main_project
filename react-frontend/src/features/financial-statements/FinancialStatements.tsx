@@ -104,7 +104,7 @@ export const FinancialStatements: React.FC = () => {
   // Fetch listed companies for selector
   const { data: companiesData } = useQuery({
     queryKey: ['companies-financial-dropdown'],
-    queryFn: () => getCompanies(100),
+    queryFn: () => getCompanies(1, 100),
   });
 
   const companies: Company[] = useMemo(() => {

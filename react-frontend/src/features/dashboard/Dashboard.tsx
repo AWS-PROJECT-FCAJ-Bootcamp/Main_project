@@ -92,7 +92,7 @@ export const Dashboard: React.FC = () => {
 
   const {
     data: companiesData, isLoading: isLoadingCompanies, isError: isErrorCompanies, refetch: refetchCompanies,
-  } = useQuery({ queryKey: ['companies'], queryFn: () => getCompanies(100) });
+  } = useQuery({ queryKey: ['companies'], queryFn: () => getCompanies(1, 100) });
 
   const companies: Company[] = companiesData?.data ?? [];
 
