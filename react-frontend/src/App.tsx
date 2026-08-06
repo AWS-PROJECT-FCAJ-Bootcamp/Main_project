@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 // ── Eager (Auth layout is tiny and needed on first paint for unauthenticated users)
 import { AuthLayout } from './features/auth/AuthLayout';
 import { AppLayout } from './components/layout/AppLayout';
+import { ProtectedRoute } from './components/layout/ProtectedRoute';
 
 // ── Lazy (Route-level code splitting → each page loaded only when first visited)
 const Login = lazy(() => import('./features/auth/Login').then((m) => ({ default: m.Login })));
@@ -20,6 +21,7 @@ const ModelStudioView = lazy(() => import('./features/ai-models/ModelStudioView'
 const PredictionDashboardView = lazy(() => import('./features/prediction/PredictionDashboardView').then((m) => ({ default: m.PredictionDashboardView })));
 const DataExplorer = lazy(() => import('./features/data-explorer/DataExplorer').then((m) => ({ default: m.DataExplorer })));
 const Settings = lazy(() => import('./features/settings/Settings').then((m) => ({ default: m.Settings })));
+const ProfileView = lazy(() => import('./features/profile/ProfileView').then((m) => ({ default: m.ProfileView })));
 
 // ── Suspense Fallback ────────────────────────────────────────────────────────
 const PageLoader = () => (
@@ -56,8 +58,15 @@ function App() {
             </Route>
 
             {/* Protected routes */}
-            <Route element={<AppLayout />}>
+            <Route
+              element={
+                <ProtectedRoute>
+                  <AppLayout />
+                </ProtectedRoute>
+              }
+            >
               <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/profile" element={<ProfileView />} />
               <Route path="/companies" element={<CompanyList />} />
               <Route path="/financials" element={<FinancialStatements />} />
               <Route path="/normalization" element={<DataNormalization />} />

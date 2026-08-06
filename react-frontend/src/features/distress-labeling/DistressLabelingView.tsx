@@ -92,7 +92,7 @@ export const DistressLabelingView: React.FC = () => {
   // Fetch listed companies
   const { data: companiesData } = useQuery({
     queryKey: ['companies-distress-dropdown'],
-    queryFn: () => getCompanies(100),
+    queryFn: () => getCompanies(1, 100),
   });
 
   const companies: Company[] = useMemo(() => {

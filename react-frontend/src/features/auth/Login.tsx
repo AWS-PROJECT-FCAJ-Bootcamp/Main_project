@@ -1,30 +1,40 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAppStore } from '../../store/useAppStore';
-import { LogIn, Eye, EyeOff, Loader2 } from 'lucide-react';
+import { loginApi } from '../../services/api';
+import { LogIn, Eye, EyeOff, Loader2, AlertCircle } from 'lucide-react';
 
 const loginSchema = z.object({
-  username: z.string().min(3, 'Tên đăng nhập phải có ít nhất 3 ký tự'),
+  email: z.string().email('Email không hợp lệ'),
   password: z.string().min(6, 'Mật khẩu phải có ít nhất 6 ký tự'),
 });
 type LoginForm = z.infer<typeof loginSchema>;
 
 export const Login: React.FC = () => {
-  const login = useAppStore((s) => s.login);
+  const loginStore = useAppStore((s) => s.login);
   const navigate = useNavigate();
-  const [showPwd, setShowPwd] = React.useState(false);
+  const [showPwd, setShowPwd] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<LoginForm>({
     resolver: zodResolver(loginSchema),
   });
 
   const onSubmit = async (data: LoginForm) => {
-    await new Promise((r) => setTimeout(r, 600));
-    login(data.username);
-    navigate('/dashboard');
+    setErrorMessage(null);
+    try {
+      const res = await loginApi(data);
+      if (res.access_token) {
+        localStorage.setItem('access_token', res.access_token);
+        loginStore(res.full_name || res.email);
+        navigate('/dashboard');
+      }
+    } catch (err: any) {
+      setErrorMessage(err.message || 'Đăng nhập thất bại. Vui lòng kiểm tra lại email/mật khẩu.');
+    }
   };
 
   return (
@@ -42,16 +52,24 @@ export const Login: React.FC = () => {
           <p className="text-sm text-slate-500 mt-1">Đăng nhập để truy cập hệ thống phân tích</p>
         </div>
 
+        {errorMessage && (
+          <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 text-sm rounded-xl flex items-center gap-2">
+            <AlertCircle size={16} className="shrink-0" />
+            <span>{errorMessage}</span>
+          </div>
+        )}
+
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-slate-600 uppercase tracking-wide">Tên đăng nhập</label>
+            <label className="text-xs font-semibold text-slate-600 uppercase tracking-wide">Email</label>
             <input
-              {...register('username')}
-              placeholder="admin"
+              {...register('email')}
+              type="email"
+              placeholder="you@example.com"
               className="input-field"
-              autoComplete="username"
+              autoComplete="email"
             />
-            {errors.username && <p className="text-xs text-red-500 flex items-center gap-1 mt-1">{errors.username.message}</p>}
+            {errors.email && <p className="text-xs text-red-500 flex items-center gap-1 mt-1">{errors.email.message}</p>}
           </div>
 
           <div className="space-y-1.5">

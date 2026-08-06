@@ -14,9 +14,25 @@ export class ApiClientError extends Error {
   }
 }
 
+// Attach JWT Bearer Token if available
+apiClient.interceptors.request.use((config) => {
+  const token = localStorage.getItem('access_token');
+  if (token && config.headers) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
 apiClient.interceptors.response.use(
   (response) => response.data,
   (error: AxiosError) => {
+    if (error.response?.status === 401) {
+      localStorage.removeItem('access_token');
+      if (window.location.pathname !== '/login' && window.location.pathname !== '/register') {
+        window.location.href = '/login';
+      }
+    }
+
     let detail = '';
     if (error.response?.data) {
       const data = error.response.data as any;
@@ -28,21 +44,50 @@ apiClient.interceptors.response.use(
   }
 );
 
-// --- API Functions ---
+// --- Auth & User API ---
+
+export const registerApi = async (data: { email: string; password: string; full_name: string }): Promise<any> => {
+  return apiClient.post('/auth/register', data);
+};
+
+export const loginApi = async (data: { email: string; password: string }): Promise<any> => {
+  return apiClient.post('/auth/login', data);
+};
+
+export const getProfileApi = async (): Promise<any> => {
+  return apiClient.get('/auth/me');
+};
+
+export const getWatchlistApi = async (): Promise<any> => {
+  return apiClient.get('/users/watchlist');
+};
+
+export const addToWatchlistApi = async (data: { ticker: string; note?: string }): Promise<any> => {
+  return apiClient.post('/users/watchlist', data);
+};
+
+export const deleteWatchlistApi = async (ticker: string): Promise<any> => {
+  return apiClient.delete(`/users/watchlist/${ticker}`);
+};
+
+// --- General API Functions ---
 
 export const getHealth = async (): Promise<any> => {
   return apiClient.get('/health', { timeout: 5000 });
 };
 
 export const getCompanies = async (
-  limit = 1000,
+  page = 1,
+  limit = 15,
+  search?: string,
   exchange?: string,
   industry?: string,
   excludeFinancial = false
 ): Promise<any> => {
-  const params: Record<string, any> = { page: 1, limit };
-  if (exchange) params.exchange = exchange;
-  if (industry) params.industry = industry;
+  const params: Record<string, any> = { page, limit };
+  if (search && search.trim()) params.search = search.trim();
+  if (exchange && exchange !== 'ALL') params.exchange = exchange;
+  if (industry && industry !== 'ALL') params.industry = industry;
   if (excludeFinancial) params.exclude_financial = true;
   return apiClient.get('/companies', { params });
 };
@@ -167,4 +212,20 @@ export const getModelEvaluation = async (modelType: string): Promise<any> => {
 
 export const getDistressPrediction = async (ticker: string): Promise<any> => {
   return apiClient.get(`/prediction/${ticker}`);
+};
+
+export const getCurrentUser = async (): Promise<any> => {
+  return apiClient.get('/users/me');
+};
+
+export const getUserWatchlist = async (): Promise<any> => {
+  return apiClient.get('/users/watchlist');
+};
+
+export const addToWatchlist = async (ticker: string, note: string = ''): Promise<any> => {
+  return apiClient.post('/users/watchlist', { ticker, note });
+};
+
+export const removeFromWatchlist = async (ticker: string): Promise<any> => {
+  return apiClient.delete(`/users/watchlist/${ticker}`);
 };

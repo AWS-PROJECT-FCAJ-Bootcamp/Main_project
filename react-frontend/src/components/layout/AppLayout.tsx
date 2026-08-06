@@ -19,6 +19,7 @@ import { useAppStore } from '../../store/useAppStore';
 
 const navItems = [
   { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { to: '/profile', label: 'Hồ sơ & Watchlist', icon: User },
   { to: '/companies', label: 'Danh sách Công ty', icon: Building2 },
   { to: '/financials', label: 'Báo cáo Tài chính', icon: FileText },
   { to: '/normalization', label: 'Chuẩn hóa & Làm sạch', icon: CheckSquare },
@@ -151,7 +152,18 @@ export const AppLayout: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="p-2">
+                <div className="p-2 space-y-1">
+                  <button
+                    onClick={() => {
+                      setDropdownOpen(false);
+                      navigate('/profile');
+                    }}
+                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium text-slate-700
+                      hover:bg-slate-50 transition-all duration-150"
+                  >
+                    <User size={14} className="text-indigo-600" />
+                    Hồ sơ & Watchlist
+                  </button>
                   <button
                     onClick={handleLogout}
                     className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium text-red-600

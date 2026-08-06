@@ -59,7 +59,7 @@ def test_prices_contract_supports_date_filter(api_client):
     [
         ("/companies", {"page": 0}),
         ("/companies", {"limit": 0}),
-        ("/companies", {"limit": 101}),
+        ("/companies", {"limit": 1001}),
         ("/prices", {}),
         ("/prices", {"ticker": "FPT", "limit": 0}),
         ("/prices", {"ticker": "FPT", "limit": 1001}),

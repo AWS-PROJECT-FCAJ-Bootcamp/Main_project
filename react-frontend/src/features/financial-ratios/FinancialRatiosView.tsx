@@ -54,7 +54,7 @@ export const FinancialRatiosView: React.FC = () => {
   // Fetch listed companies
   const { data: companiesData } = useQuery({
     queryKey: ['companies-ratios-dropdown'],
-    queryFn: () => getCompanies(100),
+    queryFn: () => getCompanies(1, 100),
   });
 
   const companies: Company[] = useMemo(() => {

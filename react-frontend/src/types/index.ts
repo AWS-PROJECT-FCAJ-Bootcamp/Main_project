@@ -1,7 +1,23 @@
+export interface UserProfile {
+  user_id: string;
+  email: string;
+  full_name: string;
+  created_at: string;
+  role: string;
+}
+
+export interface WatchlistItem {
+  user_id: string;
+  ticker: string;
+  added_at: string;
+  note: string;
+}
+
 export interface Company {
   ticker: string;
   name: string;
   exchange?: string;
+  market?: string;
   industry?: string;
   sector?: string;
   is_financial?: boolean;

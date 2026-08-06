@@ -138,7 +138,7 @@ export const PredictionDashboardView: React.FC = () => {
   // Fetch listed companies
   const { data: companiesData } = useQuery({
     queryKey: ['companies-prediction-dropdown'],
-    queryFn: () => getCompanies(100),
+    queryFn: () => getCompanies(1, 100),
   });
 
   const companies: Company[] = useMemo(() => {

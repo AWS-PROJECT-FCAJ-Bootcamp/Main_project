@@ -18,6 +18,11 @@ class Settings(BaseSettings):
     vnstock_requests_per_minute: int = 60
     data_provider_api_key: SecretStr = SecretStr("")
 
+    # JWT Authentication Settings
+    jwt_secret_key: str = "financial_data_lake_jwt_secret_key_local_poc"
+    jwt_algorithm: str = "HS256"
+    jwt_expiration_hours: int = 24
+
     raw_data_dir: Path = Path("data/raw/ohlcv")
     curated_data_dir: Path = Path("data/curated/ohlcv")
     seed_raw_data_dir: Path = Path("reports/raw/ohlcv")
