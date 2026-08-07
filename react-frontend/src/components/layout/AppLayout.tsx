@@ -21,6 +21,8 @@ import {
   BookOpen,
 } from 'lucide-react';
 import { useAppStore } from '@/store/useAppStore';
+import { AuthButton } from '@/features/auth/components/AuthButton';
+import { isCognitoConfigured } from '@/config/cognito';
 
 interface NavSection {
   title: string;
@@ -124,10 +126,9 @@ export const AppLayout: React.FC = () => {
                       key={item.to}
                       to={item.to}
                       className={({ isActive }) =>
-                        `flex items-center justify-between px-3 py-2.5 rounded-lg text-xs font-semibold transition-all ${
-                          isActive
-                            ? 'bg-indigo-50 text-indigo-700 font-bold border-l-4 border-indigo-600 shadow-xs'
-                            : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/80 border-l-4 border-transparent'
+                        `flex items-center justify-between px-3 py-2.5 rounded-lg text-xs font-semibold transition-all ${isActive
+                          ? 'bg-indigo-50 text-indigo-700 font-bold border-l-4 border-indigo-600 shadow-xs'
+                          : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/80 border-l-4 border-transparent'
                         }`
                       }
                     >
@@ -182,8 +183,20 @@ export const AppLayout: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-4 text-xs">
-            <span className="text-slate-500 font-mono">
-              Trạng Thái Hệ Thống: <strong className="text-indigo-600 font-bold">FastAPI + Parquet Data Lake</strong>
+            {isCognitoConfigured ? (
+              <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 font-mono font-bold">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                AWS COGNITO: ONLINE
+              </span>
+            ) : (
+              <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-50 text-amber-700 border border-amber-200 font-mono font-semibold">
+                <span className="w-2 h-2 rounded-full bg-amber-500" />
+                AUTH: LOCAL DEV MODE
+              </span>
+            )}
+            <AuthButton />
+            <span className="text-slate-500 font-mono hidden md:inline">
+              <strong className="text-indigo-600 font-bold">FastAPI + Parquet Data Lake</strong>
             </span>
           </div>
         </header>
