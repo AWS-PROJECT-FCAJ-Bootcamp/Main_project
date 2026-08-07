@@ -12,8 +12,8 @@ import {
   Sliders,
   FileText,
 } from 'lucide-react';
-import { getCompanies, getDistressLabels, runDistressLabelingEngine } from '../../services/api';
-import type { Company, DistressLabelResult } from '../../types';
+import { getCompanies, getDistressLabels, runDistressLabelingEngine } from '@/services/api';
+import type { Company, DistressLabelResult } from '@/types';
 
 // Mock Labeling Results for Vietnamese listed companies (2019-2024)
 const MOCK_DISTRESS_DATA: Record<string, DistressLabelResult[]> = {

@@ -6,6 +6,7 @@ from collections.abc import Callable
 from typing import Any, Protocol
 
 import pandas as pd
+import requests
 from pydantic import SecretStr
 
 from src.settings import Settings
@@ -65,7 +66,6 @@ class VnstockApiSource:
         self._rate_lock = threading.Lock()
 
     def _create_market(self):
-        # Vnstock reads this official environment variable during authentication.
         os.environ["VNSTOCK_API_KEY"] = self._api_key.get_secret_value()
         if self._market_factory is not None:
             return self._market_factory()
@@ -98,8 +98,6 @@ class VnstockApiSource:
         for attempt in range(1, self.retries + 1):
             self._wait_for_request_slot()
             try:
-                # The application contract calls this value `interval`; vnstock 4.0.x
-                # names the corresponding SDK parameter `resolution`.
                 frame = equity.ohlcv(start=start, end=end, resolution="1D")
                 return frame if isinstance(frame, pd.DataFrame) else pd.DataFrame(frame), attempt
             except Exception:
@@ -115,12 +113,79 @@ class VnstockApiSource:
         raise RuntimeError(f"Unable to retrieve {ticker}")
 
 
+class YahooFinanceSource:
+    """Free Yahoo Finance API adapter (NO API KEY REQUIRED)."""
+
+    provider_name = "YAHOO_FINANCE"
+
+    def history(
+        self, ticker: str, start: str, end: str, interval: str
+    ) -> tuple[pd.DataFrame, int]:
+        symbol = ticker.upper()
+        candidates = [symbol]
+        if not symbol.endswith(".VN") and "." not in symbol and "-" not in symbol:
+            candidates.insert(0, f"{symbol}.VN")
+
+        data_df = None
+
+        # 1. Direct HTTP REST API from Yahoo Chart API (Free & No API Key Required)
+        headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
+        for cand in candidates:
+            url = f"https://query1.finance.yahoo.com/v8/finance/chart/{cand}?range=5y&interval=1d"
+            try:
+                res = requests.get(url, headers=headers, timeout=10)
+                if res.status_code == 200:
+                    chart_result = res.json().get("chart", {}).get("result", [])
+                    if chart_result and len(chart_result) > 0:
+                        chart_data = chart_result[0]
+                        timestamps = chart_data.get("timestamp", [])
+                        quote = chart_data.get("indicators", {}).get("quote", [{}])[0]
+                        if timestamps and quote:
+                            df = pd.DataFrame({
+                                "time": pd.to_datetime(timestamps, unit="s").dt.strftime("%Y-%m-%d"),
+                                "open": quote.get("open", []),
+                                "high": quote.get("high", []),
+                                "low": quote.get("low", []),
+                                "close": quote.get("close", []),
+                                "volume": quote.get("volume", []),
+                            }).dropna()
+                            if not df.empty:
+                                data_df = df
+                                break
+            except Exception as error:
+                logger.warning("Yahoo Finance request failed for %s: %s", cand, error)
+                continue
+
+        # 2. Try yfinance library fallback if installed
+        if data_df is None or data_df.empty:
+            try:
+                import yfinance as yf
+                for cand in candidates:
+                    df = yf.download(cand, start=start, end=end, interval="1d", progress=False)
+                    if not df.empty:
+                        if isinstance(df.columns, pd.MultiIndex):
+                            df.columns = df.columns.get_level_values(0)
+                        df = df.reset_index()
+                        data_df = df
+                        break
+            except Exception:
+                pass
+
+        if data_df is None or data_df.empty:
+            raise ValueError(f"NO_DATA: Yahoo Finance returned no rows for symbol {ticker}")
+
+        return data_df, 1
+
+
 def build_market_data_source(config: Settings) -> MarketDataSource:
-    if config.data_provider.strip().upper() != "VNSTOCK_FREE":
-        raise SourceConfigurationError(
-            f"Unsupported DATA_PROVIDER for local PoC: {config.data_provider!r}"
+    provider = config.data_provider.strip().upper()
+    if provider == "YAHOO_FINANCE":
+        return YahooFinanceSource()
+    if provider == "VNSTOCK_FREE":
+        return VnstockApiSource(
+            config.vnstock_api_key,
+            requests_per_minute=config.vnstock_requests_per_minute,
         )
-    return VnstockApiSource(
-        config.vnstock_api_key,
-        requests_per_minute=config.vnstock_requests_per_minute,
+    raise SourceConfigurationError(
+        f"Unsupported DATA_PROVIDER for local PoC: {config.data_provider!r}"
     )

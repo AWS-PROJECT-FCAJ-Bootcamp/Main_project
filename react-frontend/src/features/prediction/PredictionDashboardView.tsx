@@ -21,8 +21,8 @@ import {
   ArrowDownRight,
   Lightbulb,
 } from 'lucide-react';
-import { getCompanies, getDistressPrediction } from '../../services/api';
-import type { Company, PredictionResult } from '../../types';
+import { getCompanies, getDistressPrediction } from '@/services/api';
+import type { Company, PredictionResult } from '@/types';
 
 // Mock Predictions for Vietnamese Companies (Mục 10 Spec)
 const MOCK_PREDICTIONS: Record<string, PredictionResult> = {
@@ -311,7 +311,7 @@ export const PredictionDashboardView: React.FC = () => {
           </div>
 
           <div className="p-5 flex-1 space-y-3 divide-y divide-slate-100">
-            {prediction?.risk_factors.map((factor, idx) => (
+            {prediction?.risk_factors.map((factor: { factor_name: string; impact_value: string; description: string; impact_type: string }, idx: number) => (
               <div key={idx} className="pt-3 first:pt-0 flex items-start justify-between gap-3">
                 <div className="space-y-0.5">
                   <div className="flex items-center gap-2">
@@ -344,7 +344,7 @@ export const PredictionDashboardView: React.FC = () => {
           </div>
 
           <div className="p-5 flex-1 space-y-3">
-            {prediction?.recommendations.map((rec, idx) => (
+            {prediction?.recommendations.map((rec: string, idx: number) => (
               <div key={idx} className="p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs text-slate-700 flex items-start gap-2.5">
                 <span className="w-5 h-5 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold text-[10px] flex-shrink-0 mt-0.5">
                   {idx + 1}

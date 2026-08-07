@@ -23,8 +23,8 @@ import {
   Tooltip as RechartsTooltip,
   Legend,
 } from 'recharts';
-import { getCompanies, getFinancialRatios, calculateFinancialRatios } from '../../services/api';
-import type { Company, FinancialRatios } from '../../types';
+import { getCompanies, getFinancialRatios, calculateFinancialRatios } from '@/services/api';
+import type { Company, FinancialRatios } from '@/types';
 
 // Mock Financial Ratios history for Vietnamese listed companies (2019-2024)
 const MOCK_RATIOS: Record<string, FinancialRatios[]> = {

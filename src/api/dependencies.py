@@ -17,7 +17,12 @@ def get_data_service(db=Depends(get_db_connection)) -> DataService:
 
 
 def get_user_service() -> BaseUserService:
-    """Dependency providing the User & Watchlist Service instance."""
+    """Dependency providing the User & Watchlist Service instance (SQLite for local, DynamoDB for AWS)."""
+    import os
+    user_db_type = os.environ.get("USER_DB_TYPE", "sqlite").lower()
+    if user_db_type == "dynamodb":
+        from src.api.services.user_service import DynamoDBUserService
+        return DynamoDBUserService()
     return LocalSQLiteUserService()
 
 
