@@ -1,0 +1,19 @@
+version: 1
+applications:
+  - frontend:
+      phases:
+        preBuild:
+          commands:
+            - cd react-frontend
+            - npm ci
+        build:
+          commands:
+            - npm run build
+      artifacts:
+        baseDirectory: react-frontend/dist
+        files:
+          - '**/*'
+      cache:
+        paths:
+          - react-frontend/node_modules/**/*
+      appRoot: react-frontend
