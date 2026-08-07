@@ -20,6 +20,9 @@ const DatasetExportView = lazy(() => import('./features/dataset-export/DatasetEx
 const ModelStudioView = lazy(() => import('./features/ai-models/ModelStudioView').then((m) => ({ default: m.ModelStudioView })));
 const PredictionDashboardView = lazy(() => import('./features/prediction/PredictionDashboardView').then((m) => ({ default: m.PredictionDashboardView })));
 const DataExplorer = lazy(() => import('./features/data-explorer/DataExplorer').then((m) => ({ default: m.DataExplorer })));
+const TickMonitorView = lazy(() => import('./features/tick-monitor/TickMonitorView').then((m) => ({ default: m.TickMonitorView })));
+const HistoricalOhlcvView = lazy(() => import('./features/historical-ohlcv/HistoricalOhlcvView').then((m) => ({ default: m.HistoricalOhlcvView })));
+const TechnicalChartsView = lazy(() => import('./features/technical-charts/TechnicalChartsView').then((m) => ({ default: m.TechnicalChartsView })));
 const Settings = lazy(() => import('./features/settings/Settings').then((m) => ({ default: m.Settings })));
 const ProfileView = lazy(() => import('./features/profile/ProfileView').then((m) => ({ default: m.ProfileView })));
 
@@ -68,14 +71,17 @@ function App() {
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/profile" element={<ProfileView />} />
               <Route path="/companies" element={<CompanyList />} />
+              <Route path="/explorer" element={<DataExplorer />} />
+              <Route path="/tick-monitor" element={<TickMonitorView />} />
+              <Route path="/ohlcv" element={<HistoricalOhlcvView />} />
+              <Route path="/charts" element={<TechnicalChartsView />} />
+              <Route path="/dataset" element={<DatasetExportView />} />
               <Route path="/financials" element={<FinancialStatements />} />
               <Route path="/normalization" element={<DataNormalization />} />
               <Route path="/ratios" element={<FinancialRatiosView />} />
               <Route path="/distress" element={<DistressLabelingView />} />
-              <Route path="/dataset" element={<DatasetExportView />} />
               <Route path="/ai-studio" element={<ModelStudioView />} />
               <Route path="/prediction" element={<PredictionDashboardView />} />
-              <Route path="/explorer" element={<DataExplorer />} />
               <Route path="/settings" element={<Settings />} />
               <Route path="/" element={<Navigate to="/dashboard" replace />} />
             </Route>

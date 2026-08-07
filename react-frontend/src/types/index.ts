@@ -33,7 +33,12 @@ export interface PriceData {
   low_price: number;
   volume: number;
   ma20?: number;
+  ma50?: number;
+  ma200?: number;
   rsi_14?: number;
+  macd?: number;
+  macd_signal?: number;
+  macd_hist?: number;
 }
 
 export interface IngestionResult {

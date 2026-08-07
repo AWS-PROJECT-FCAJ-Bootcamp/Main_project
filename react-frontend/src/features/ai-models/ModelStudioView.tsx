@@ -24,8 +24,8 @@ import {
   Loader2,
   Info,
 } from 'lucide-react';
-import { trainModel, getModelEvaluation } from '../../services/api';
-import type { ModelTrainingResult } from '../../types';
+import { trainModel, getModelEvaluation } from '@/services/api';
+import type { ModelTrainingResult } from '@/types';
 
 // Mock Evaluation Data for AI Models (Mục 9 Spec)
 const MOCK_MODEL_RESULTS: Record<string, ModelTrainingResult> = {

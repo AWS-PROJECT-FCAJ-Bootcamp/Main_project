@@ -16,8 +16,8 @@ import {
   Tag,
 } from 'lucide-react';
 import { format } from 'date-fns';
-import { getCurrentUser, getUserWatchlist, addToWatchlist, removeFromWatchlist } from '../../services/api';
-import type { UserProfile, WatchlistItem } from '../../types';
+import { getCurrentUser, getUserWatchlist, addToWatchlist, removeFromWatchlist } from '@/services/api';
+import type { UserProfile, WatchlistItem } from '@/types';
 
 export const ProfileView: React.FC = () => {
   const queryClient = useQueryClient();
@@ -49,8 +49,9 @@ export const ProfileView: React.FC = () => {
     staleTime: 15_000,
   });
 
-  const user: UserProfile | null = profileData ?? null;
-  const watchlist: WatchlistItem[] = watchlistData?.data ?? (Array.isArray(watchlistData) ? watchlistData : []);
+  const user: UserProfile | null = profileData?.data ?? null;
+  const watchlistDataObj = watchlistData?.data ?? watchlistData;
+  const watchlist: WatchlistItem[] = Array.isArray(watchlistDataObj) ? watchlistDataObj : [];
 
   // Add Ticker Mutation
   const addMutation = useMutation({

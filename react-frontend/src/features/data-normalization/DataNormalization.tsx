@@ -12,8 +12,8 @@ import {
   AlertTriangle,
   Loader2,
 } from 'lucide-react';
-import { getMetricMappings, getDataQualityReport, runDataNormalization } from '../../services/api';
-import type { MetricMappingRule, DataQualityReport } from '../../types';
+import { getMetricMappings, getDataQualityReport, runDataNormalization } from '@/services/api';
+import type { MetricMappingRule, DataQualityReport } from '@/types';
 
 // Representative Metric Mappings
 const DEFAULT_METRIC_MAPPINGS: MetricMappingRule[] = [
