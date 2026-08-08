@@ -71,12 +71,12 @@ def test_ticker_input_is_bound_as_parameter_not_sql(curated_settings):
     connection = duckdb.connect(":memory:")
     try:
         service = DataService(connection, curated_settings)
-        result = service.get_prices("FPT' OR 1=1 --", None, None, page=1, limit=100)
+        with pytest.raises(ValueError, match="Invalid ticker"):
+            service.get_prices("FPT' OR 1=1 --", None, None, page=1, limit=100)
         intact = service.get_prices("FPT", None, None, page=1, limit=100)
     finally:
         connection.close()
 
-    assert result["data"] == []
     assert intact["total_records"] == 2
 
 

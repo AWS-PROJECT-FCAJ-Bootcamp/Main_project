@@ -182,17 +182,17 @@ class DataService:
         offset = (page - 1) * limit
 
         if self.config.is_cloud:
-            where_clauses = ["ticker = %(ticker)s"]
+            where_clauses = ["ticker = :ticker"]
             params: dict = {"ticker": ticker}
             if start_date:
                 # trading_date stored as nanoseconds bigint → convert to compare
                 where_clauses.append(
-                    "trading_date >= to_unixtime(date_parse(%(start_date)s, '%%Y-%%m-%%d')) * 1000000000"
+                    "trading_date >= to_unixtime(date_parse(:start_date, '%Y-%m-%d')) * 1000000000"
                 )
                 params["start_date"] = start_date
             if end_date:
                 where_clauses.append(
-                    "trading_date <= to_unixtime(date_parse(%(end_date)s, '%%Y-%%m-%%d')) * 1000000000"
+                    "trading_date <= to_unixtime(date_parse(:end_date, '%Y-%m-%d')) * 1000000000"
                 )
                 params["end_date"] = end_date
             where_str = " AND ".join(where_clauses)
@@ -201,7 +201,8 @@ class DataService:
                 count_df = self._athena_query(
                     f"SELECT COUNT(*) AS cnt FROM {self.athena_table} WHERE {where_str}",
                     params=params,
-                )                total_records = int(count_df["cnt"].iloc[0])
+                )
+                total_records = int(count_df["cnt"].iloc[0])
 
                 frame = self._athena_query(f"""
                     SELECT ticker,
@@ -272,7 +273,7 @@ class DataService:
                     f"date_format(from_unixtime(trading_date / 1000000000), '%Y-%m-%d') AS trading_date, "
                     f"open_price, high_price, low_price, close_price, volume, return_pct, ma20, rsi_14 "
                     f"FROM {self.athena_table} "
-                    f"WHERE ticker = %(ticker)s "
+                    f"WHERE ticker = :ticker "
                     f"ORDER BY trading_date ASC",
                     params={"ticker": ticker},
                 )

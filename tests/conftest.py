@@ -161,13 +161,14 @@ def curated_settings(settings_factory) -> Settings:
 
 @pytest.fixture
 def api_client(curated_settings: Settings, monkeypatch: pytest.MonkeyPatch):
-    from src.api.dependencies import get_data_service
+    from src.api.dependencies import get_data_service, get_current_user
     from src.api.main import app
     from src.api.services.data_service import DataService
     import src.api.main as main_module
 
     connection = duckdb.connect(":memory:")
     app.dependency_overrides[get_data_service] = lambda: DataService(connection, curated_settings)
+    app.dependency_overrides[get_current_user] = lambda: {"user_id": "test_user"}
     monkeypatch.setattr(main_module, "settings", curated_settings)
     with TestClient(app) as client:
         yield client
