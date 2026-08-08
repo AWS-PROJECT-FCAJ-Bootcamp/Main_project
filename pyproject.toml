@@ -25,6 +25,7 @@ dependencies = [
     "vnstock>=4.0.3,<5",
     "mangum>=0.19.0,<1",
     "boto3>=1.38,<2",
+    "awswrangler>=3.0.0,<4",
 ]
 
 [dependency-groups]
