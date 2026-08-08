@@ -1,24 +1,9 @@
 import React, { useState } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import {
-  LayoutDashboard,
-  Building2,
-  FileText,
-  CheckSquare,
-  Calculator,
-  FileSpreadsheet,
-  Settings as SettingsIcon,
-  User,
-  LogOut,
-  Database,
-  Activity,
-  Calendar,
-  LineChart,
-  ShieldAlert,
-  Cpu,
-  Sparkles,
-  Search,
-  BookOpen,
+  LayoutDashboard, Building2, FileText, CheckSquare, Calculator, FileSpreadsheet,
+  LogOut, Database, Activity, Calendar, LineChart,
+  Search, BookOpen, Menu, X
 } from 'lucide-react';
 import { useAppStore } from '@/store/useAppStore';
 import { AuthButton } from '@/features/auth/components/AuthButton';
@@ -36,13 +21,13 @@ interface NavSection {
 
 const navSections: NavSection[] = [
   {
-    title: '📊 BẢNG ĐIỀU KHIỂN & 5 VIEW CHÍNH',
+    title: '📊 BẢNG ĐIỀU KHIỂN & VIEWS',
     items: [
-      { to: '/explorer', label: 'View 1: Cào & Nạp Dữ Liệu', icon: Database, badge: 'S3' },
-      { to: '/tick-monitor', label: 'View 2: Bảng Giá & Dòng Tiền', icon: Activity, badge: 'Live' },
-      { to: '/ohlcv', label: 'View 3: Lịch Sử Nến Giá', icon: Calendar },
-      { to: '/charts', label: 'View 4: Biểu Đồ Kỹ Thuật', icon: LineChart, badge: 'Canvas' },
-      { to: '/dataset', label: 'View 5: Xuất Tập Dữ Liệu', icon: FileSpreadsheet, badge: 'Parquet' },
+      { to: '/explorer', label: 'Cào & Nạp Dữ Liệu', icon: Database, badge: 'S3' },
+      { to: '/tick-monitor', label: 'Bảng Giá & Dòng Tiền', icon: Activity, badge: 'Live' },
+      { to: '/ohlcv', label: 'Lịch Sử Nến Giá', icon: Calendar },
+      { to: '/charts', label: 'Biểu Đồ Kỹ Thuật', icon: LineChart, badge: 'Canvas' },
+      { to: '/dataset', label: 'Xuất Tập Dữ Liệu', icon: FileSpreadsheet, badge: 'Parquet' },
     ],
   },
   {
@@ -55,34 +40,38 @@ const navSections: NavSection[] = [
       { to: '/normalization', label: 'Chuẩn Hóa Dữ Liệu', icon: CheckSquare },
     ],
   },
-  {
-    title: '🤖 RỦI RO & MÔ HÌNH AI',
-    items: [
-      { to: '/distress', label: 'Gán Nhãn Distress', icon: ShieldAlert },
-      { to: '/ai-studio', label: 'AI/ML Studio', icon: Cpu },
-      { to: '/prediction', label: 'Dự Báo Rủi Ro AI', icon: Sparkles },
-      { to: '/profile', label: 'Hồ Sơ & Watchlist', icon: User },
-      { to: '/settings', label: 'Cài Đặt Hệ Thống', icon: SettingsIcon },
-    ],
-  },
 ];
 
 export const AppLayout: React.FC = () => {
   const navigate = useNavigate();
   const { username, logout } = useAppStore();
   const [globalSearch, setGlobalSearch] = useState('');
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const handleGlobalSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (globalSearch.trim()) {
       navigate(`/companies?search=${encodeURIComponent(globalSearch.trim().toUpperCase())}`);
+      setIsMobileMenuOpen(false);
     }
   };
 
   return (
-    <div className="flex h-screen bg-slate-50 text-slate-900 overflow-hidden font-sans">
-      {/* ── Left Sidebar (Bright Modern Light Theme) ── */}
-      <aside className="w-64 bg-white border-r border-slate-200 flex flex-col flex-shrink-0 shadow-sm z-20">
+    <div className="flex h-screen bg-slate-50 text-slate-900 overflow-hidden font-sans relative">
+      {/* ── Mobile Menu Overlay ── */}
+      {isMobileMenuOpen && (
+        <div 
+          className="fixed inset-0 bg-slate-900/50 z-30 lg:hidden transition-opacity backdrop-blur-sm"
+          onClick={() => setIsMobileMenuOpen(false)}
+        />
+      )}
+
+      {/* ── Left Sidebar (Responsive) ── */}
+      <aside 
+        className={`fixed inset-y-0 left-0 z-40 w-64 bg-white border-r border-slate-200 flex flex-col shadow-xl lg:shadow-sm transform transition-transform duration-300 ease-in-out lg:relative lg:translate-x-0 ${
+          isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
+        }`}
+      >
         {/* App Logo */}
         <div className="p-4 border-b border-slate-100 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
@@ -94,6 +83,13 @@ export const AppLayout: React.FC = () => {
               <span className="text-[10px] text-emerald-600 block font-semibold">AWS DATA LAKE PLATFORM</span>
             </div>
           </div>
+          {/* Close Menu Button (Mobile Only) */}
+          <button 
+            className="lg:hidden p-1 text-slate-500 hover:bg-slate-100 rounded-md"
+            onClick={() => setIsMobileMenuOpen(false)}
+          >
+            <X size={20} />
+          </button>
         </div>
 
         {/* Global Quick Search Input */}
@@ -125,6 +121,7 @@ export const AppLayout: React.FC = () => {
                     <NavLink
                       key={item.to}
                       to={item.to}
+                      onClick={() => setIsMobileMenuOpen(false)}
                       className={({ isActive }) =>
                         `flex items-center justify-between px-3 py-2.5 rounded-lg text-xs font-semibold transition-all ${isActive
                           ? 'bg-indigo-50 text-indigo-700 font-bold border-l-4 border-indigo-600 shadow-xs'
@@ -159,7 +156,7 @@ export const AppLayout: React.FC = () => {
               <p className="text-xs font-bold text-slate-800 truncate">{username || 'Nhà Phân Tích'}</p>
               <p className="text-[10px] text-emerald-600 font-semibold truncate flex items-center gap-1">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                Online / Administrator
+                Online
               </p>
             </div>
           </div>
@@ -175,36 +172,46 @@ export const AppLayout: React.FC = () => {
       </aside>
 
       {/* ── Main Canvas Content Area ── */}
-      <main className="flex-1 flex flex-col min-w-0 overflow-hidden bg-slate-50">
-        <header className="h-13 bg-white border-b border-slate-200 px-6 flex items-center justify-between shadow-2xs z-10">
-          <div className="flex items-center gap-2.5 text-xs text-slate-600 font-mono">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-            <span className="font-semibold">AWS S3 DATA LAKE CONNECTION: ACTIVE</span>
+      <main className="flex-1 flex flex-col min-w-0 overflow-hidden bg-slate-50 relative z-10 w-full">
+        {/* Responsive Header */}
+        <header className="h-14 bg-white border-b border-slate-200 px-4 sm:px-6 flex items-center justify-between shadow-2xs z-10">
+          <div className="flex items-center gap-3">
+            <button 
+              className="lg:hidden p-1.5 -ml-1 text-slate-600 hover:bg-slate-100 rounded-md"
+              onClick={() => setIsMobileMenuOpen(true)}
+            >
+              <Menu size={20} />
+            </button>
+            <div className="hidden sm:flex items-center gap-2.5 text-xs text-slate-600 font-mono">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              <span className="font-semibold">AWS DATA LAKE: ACTIVE</span>
+            </div>
           </div>
 
-          <div className="flex items-center gap-4 text-xs">
+          <div className="flex items-center gap-2 sm:gap-4 text-xs">
             {isCognitoConfigured ? (
-              <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 font-mono font-bold">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                AWS COGNITO: ONLINE
+              <span className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 font-mono font-bold">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                <span className="hidden sm:inline">COGNITO: ONLINE</span>
+                <span className="sm:hidden">COGNITO</span>
               </span>
             ) : (
-              <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-50 text-amber-700 border border-amber-200 font-mono font-semibold">
-                <span className="w-2 h-2 rounded-full bg-amber-500" />
-                AUTH: LOCAL DEV MODE
+              <span className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-amber-50 text-amber-700 border border-amber-200 font-mono font-semibold">
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                <span className="hidden sm:inline">LOCAL DEV MODE</span>
+                <span className="sm:hidden">LOCAL</span>
               </span>
             )}
             <AuthButton />
-            <span className="text-slate-500 font-mono hidden md:inline">
-              <strong className="text-indigo-600 font-bold">FastAPI + Parquet Data Lake</strong>
-            </span>
           </div>
         </header>
 
-        <div className="flex-1 overflow-y-auto p-4 sm:p-6 bg-slate-50">
+        {/* Scrollable Content Area */}
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6 bg-slate-50 scrollbar-thin">
           <Outlet />
         </div>
       </main>
     </div>
   );
 };
+

@@ -3,14 +3,12 @@ import type { AuthProviderProps } from 'react-oidc-context';
 export const cognitoAuthority = import.meta.env.VITE_COGNITO_AUTHORITY || '';
 export const cognitoClientId = import.meta.env.VITE_COGNITO_CLIENT_ID || '';
 
-// Auto-detect redirect URI: Local DEV -> http://localhost:5173/login, PROD -> VITE_COGNITO_REDIRECT_URI
 export const cognitoRedirectUri =
   import.meta.env.VITE_COGNITO_REDIRECT_URI ||
   (typeof window !== 'undefined'
     ? `${window.location.origin}/login`
     : 'http://localhost:5173/login');
 
-// Safe flag checking whether AWS Cognito is configured in environment
 export const isCognitoConfigured = Boolean(
   cognitoAuthority && cognitoAuthority.trim() !== '' && cognitoClientId && cognitoClientId.trim() !== ''
 );
