@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Any
 
 import boto3
-from boto3.dynamodb.conditions import Key
+from boto3.dynamodb.conditions import Attr, Key
 from src.api.services.auth_service import hash_password, verify_password
 
 logger = logging.getLogger(__name__)
@@ -203,9 +203,9 @@ class DynamoDBUserService(BaseUserService):
         return {k: v for k, v in item.items() if k != "password_hash"}
 
     def authenticate_user(self, email: str, password: str) -> dict[str, Any] | None:
-        # Use scan with FilterExpression since EmailIndex GSI may not exist
+        # scan + FilterExpression with Attr() (not Key() — Key is only for query/index)
         response = self.users_table.scan(
-            FilterExpression=Key("email").eq(email.lower())
+            FilterExpression=Attr("email").eq(email.lower())
         )
         items = response.get("Items", [])
         if not items:
