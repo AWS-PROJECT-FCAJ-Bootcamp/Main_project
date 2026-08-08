@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from mangum import Mangum
 
 from src.api.config import settings
 from src.api.routers import auth, companies, pipeline, prices, users
@@ -51,3 +52,6 @@ def health_check():
         "data_ready": curated_files > 0,
         "curated_files": curated_files,
     }
+
+# Mangum handler for AWS Lambda
+handler = Mangum(app)
