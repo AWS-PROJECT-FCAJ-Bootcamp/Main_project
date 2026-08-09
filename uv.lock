@@ -553,6 +553,7 @@ dependencies = [
     { name = "requests" },
     { name = "streamlit" },
     { name = "streamlit-option-menu" },
+    { name = "tomli" },
     { name = "uvicorn", extra = ["standard"] },
     { name = "vnstock" },
 ]
@@ -586,6 +587,7 @@ requires-dist = [
     { name = "requests", specifier = ">=2.32,<3" },
     { name = "streamlit", specifier = ">=1.45,<2" },
     { name = "streamlit-option-menu", specifier = ">=0.4,<1" },
+    { name = "tomli", specifier = ">=2.4.1" },
     { name = "uvicorn", extras = ["standard"], specifier = ">=0.34,<1" },
     { name = "vnstock", specifier = ">=4.0.3,<5" },
 ]

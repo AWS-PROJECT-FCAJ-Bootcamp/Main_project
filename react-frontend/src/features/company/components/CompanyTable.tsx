@@ -28,28 +28,32 @@ export const CompanyTable: React.FC<CompanyTableProps> = ({
   onPageChange,
 }) => {
   return (
-    <div className="bg-white rounded-xl border border-slate-200/80 shadow-sm overflow-hidden">
-      <div className="px-5 py-4 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50/50">
-        <h2 className="text-sm font-semibold text-slate-800 flex items-center gap-2">
-          <Building2 size={16} className="text-indigo-500" />
-          Bảng danh sách doanh nghiệp ({filteredCount})
+    <div className="bg-white/90 backdrop-blur-xl rounded-2xl border border-slate-200/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)] overflow-hidden transition-all hover:shadow-[0_8px_40px_rgb(0,0,0,0.06)]">
+      <div className="px-6 py-5 border-b border-slate-200/60 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-gradient-to-r from-slate-50/50 to-white relative">
+        <div className="absolute inset-0 bg-gradient-to-r from-indigo-50/30 to-transparent pointer-events-none" />
+        <h2 className="text-[15px] font-extrabold text-slate-800 flex items-center gap-2.5 relative z-10">
+          <div className="p-1.5 bg-indigo-100 rounded-lg text-indigo-600">
+            <Building2 size={18} />
+          </div>
+          Bảng danh sách doanh nghiệp
+          <span className="ml-2 px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700 text-xs font-bold border border-indigo-100">{filteredCount}</span>
         </h2>
-        <div className="flex items-center gap-3 text-xs text-slate-500">
-          <span>
-            Hiển thị {filteredCount > 0 ? startIndex + 1 : 0} - {endIndex} trên {filteredCount} dòng
+        <div className="flex items-center gap-4 text-xs text-slate-500 relative z-10">
+          <span className="font-medium">
+            Hiển thị <strong className="text-slate-800">{filteredCount > 0 ? startIndex + 1 : 0} - {endIndex}</strong> trên <strong className="text-slate-800">{filteredCount}</strong> dòng
           </span>
-          <div className="flex items-center gap-1.5">
-            <span>Hiển thị:</span>
+          <div className="flex items-center gap-2 bg-white/60 backdrop-blur rounded-lg p-1 border border-slate-200/80 shadow-inner">
+            <span className="pl-2 font-semibold">Hiển thị:</span>
             <select
               value={pageSize}
               onChange={(e) => onPageSizeChange(Number(e.target.value))}
-              className="bg-white border border-slate-200 rounded px-2 py-1 text-xs font-medium text-slate-700 cursor-pointer"
+              className="bg-transparent border-none rounded focus:ring-0 px-2 py-1 text-xs font-bold text-indigo-700 cursor-pointer outline-none"
             >
-              <option value={10}>10 dòng/trang</option>
-              <option value={15}>15 dòng/trang</option>
-              <option value={25}>25 dòng/trang</option>
-              <option value={50}>50 dòng/trang</option>
-              <option value={100}>100 dòng/trang</option>
+              <option value={10}>10 dòng</option>
+              <option value={15}>15 dòng</option>
+              <option value={25}>25 dòng</option>
+              <option value={50}>50 dòng</option>
+              <option value={100}>100 dòng</option>
             </select>
           </div>
         </div>
@@ -63,51 +67,53 @@ export const CompanyTable: React.FC<CompanyTableProps> = ({
         </div>
       ) : (
         <>
-          <div className="overflow-x-auto">
-            <table className="w-full text-left">
+          <div className="overflow-x-auto custom-scrollbar">
+            <table className="w-full text-left border-collapse">
               <thead>
-                <tr>
-                  <th className="table-header text-center w-14">STT</th>
-                  <th className="table-header">Mã CK</th>
-                  <th className="table-header">Tên doanh nghiệp</th>
-                  <th className="table-header">Sàn</th>
-                  <th className="table-header">Ngành nghề</th>
-                  <th className="table-header">Phân loại</th>
-                  <th className="table-header text-right">Trạng thái</th>
+                <tr className="bg-gradient-to-r from-slate-50 to-white border-b-2 border-slate-200/80">
+                  <th className="px-4 py-3.5 text-xs font-bold text-slate-500 uppercase tracking-widest text-center w-14">STT</th>
+                  <th className="px-4 py-3.5 text-xs font-bold text-slate-500 uppercase tracking-widest">Mã CK</th>
+                  <th className="px-4 py-3.5 text-xs font-bold text-slate-500 uppercase tracking-widest">Tên doanh nghiệp</th>
+                  <th className="px-4 py-3.5 text-xs font-bold text-slate-500 uppercase tracking-widest">Sàn</th>
+                  <th className="px-4 py-3.5 text-xs font-bold text-slate-500 uppercase tracking-widest">Ngành nghề</th>
+                  <th className="px-4 py-3.5 text-xs font-bold text-slate-500 uppercase tracking-widest">Phân loại</th>
+                  <th className="px-4 py-3.5 text-xs font-bold text-slate-500 uppercase tracking-widest text-right">Trạng thái</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="divide-y divide-slate-100">
                 {companies.map((c, idx) => (
-                  <tr key={c.ticker} className="table-row">
-                    <td className="table-cell text-center font-mono text-xs font-semibold text-slate-400">
+                  <tr key={c.ticker} className="group hover:bg-indigo-50/40 transition-colors duration-200 relative">
+                    <td className="px-4 py-3.5 text-center font-mono text-[11px] font-bold text-slate-400 relative">
+                      {/* Left border highlight on hover */}
+                      <div className="absolute left-0 top-0 bottom-0 w-1 bg-indigo-500 opacity-0 group-hover:opacity-100 transition-opacity" />
                       {startIndex + idx + 1}
                     </td>
-                    <td className="table-cell font-mono font-bold text-indigo-700">{c.ticker}</td>
-                    <td className="table-cell font-medium text-slate-800">{c.name}</td>
-                    <td className="table-cell">
-                      <span className={`px-2 py-0.5 rounded text-xs font-bold ${
-                        c.exchange === 'HOSE' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' :
-                        c.exchange === 'HNX' ? 'bg-blue-50 text-blue-700 border border-blue-200' :
-                        'bg-slate-100 text-slate-700 border border-slate-200'
+                    <td className="px-4 py-3.5 font-mono font-black text-indigo-700 text-sm">{c.ticker}</td>
+                    <td className="px-4 py-3.5 font-semibold text-slate-800 text-[13px]">{c.name}</td>
+                    <td className="px-4 py-3.5">
+                      <span className={`px-2.5 py-1 rounded-md text-[11px] font-black uppercase tracking-wider ${
+                        c.exchange === 'HOSE' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200/60 shadow-[0_2px_4px_rgb(16,185,129,0.1)]' :
+                        c.exchange === 'HNX' ? 'bg-blue-50 text-blue-700 border border-blue-200/60 shadow-[0_2px_4px_rgb(59,130,246,0.1)]' :
+                        'bg-slate-100 text-slate-700 border border-slate-200/60 shadow-sm'
                       }`}>
                         {c.exchange || 'N/A'}
                       </span>
                     </td>
-                    <td className="table-cell text-slate-600">{c.industry || '—'}</td>
-                    <td className="table-cell">
+                    <td className="px-4 py-3.5 text-[13px] font-medium text-slate-600">{c.industry || '—'}</td>
+                    <td className="px-4 py-3.5">
                       {c.is_financial ? (
-                        <span className="badge-amber flex items-center gap-1 w-max">
-                          <AlertTriangle size={10} /> Tài chính
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-bold bg-amber-50 text-amber-700 border border-amber-200/60 shadow-sm w-max uppercase tracking-wider">
+                          <AlertTriangle size={12} className="text-amber-500" /> Tài chính
                         </span>
                       ) : (
-                        <span className="badge-green flex items-center gap-1 w-max">
-                          <CheckCircle2 size={10} /> Phi tài chính
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200/60 shadow-sm w-max uppercase tracking-wider">
+                          <CheckCircle2 size={12} className="text-emerald-500" /> Phi tài chính
                         </span>
                       )}
                     </td>
-                    <td className="table-cell text-right font-medium">
-                      <span className="inline-flex items-center gap-1 text-xs text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md font-semibold">
-                        ● {c.status || 'LISTED'}
+                    <td className="px-4 py-3.5 text-right font-medium">
+                      <span className="inline-flex items-center gap-1.5 text-[11px] uppercase tracking-wider text-emerald-600 bg-emerald-50/80 border border-emerald-100 px-2.5 py-1 rounded-md font-bold shadow-sm">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" /> {c.status || 'LISTED'}
                       </span>
                     </td>
                   </tr>

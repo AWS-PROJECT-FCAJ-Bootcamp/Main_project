@@ -90,7 +90,7 @@ export const CompanyList: React.FC = () => {
   // Normalize base list
   const baseCompanies: Company[] = useMemo(() => {
     const list = apiData?.data ?? [];
-    const source = list.length > 0 ? list : DEFAULT_COMPANIES;
+    const source = list;
     return source.map((c: Company) => {
       const exchange = c.exchange || c.market || 'HOSE';
       const industry = c.industry || c.sector || 'Unassigned';

@@ -18,7 +18,7 @@ import type { PriceData } from '@/types';
 export const DatasetExportView: React.FC = () => {
   const [selectedFormat, setSelectedFormat] = useState<'CSV' | 'JSON' | 'PARQUET'>('CSV');
   const [datasetType, setDatasetType] = useState('CURATED_OHLCV');
-  const [selectedTicker, setSelectedTicker] = useState('FPT');
+  const [selectedTicker, setSelectedTicker] = useState('');
   const [isExporting, setIsExporting] = useState(false);
   const [exportSuccess, setExportSuccess] = useState(false);
 
@@ -79,14 +79,14 @@ export const DatasetExportView: React.FC = () => {
       <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs space-y-3">
         <div className="flex items-center gap-2 text-indigo-700 font-bold text-base">
           <Info size={20} className="text-indigo-600" />
-          <span>VIEW 5: TRUNG TÂM XUẤT NẠP TẬP DỮ LIỆU TÀI CHÍNH (DATASET EXPORT CENTER)</span>
+          <span>TRUNG TÂM XUẤT NẠP TẬP DỮ LIỆU TÀI CHÍNH (DATASET EXPORT CENTER)</span>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs text-slate-600 pt-2 border-t border-slate-100">
           <div className="bg-indigo-50/60 p-3 rounded-xl border border-indigo-100 space-y-1">
             <span className="font-bold text-indigo-900 flex items-center gap-1.5">
               <Download size={14} className="text-indigo-600" /> 1. Mục Đích Trang
             </span>
-            <p>Tải xuống tập dữ liệu nến giá thực tế từ DuckDB Data Lake (`data/curated/ohlcv/`) phục vụ cho mô hình AI và nghiên cứu.</p>
+            <p>Tải xuống tập dữ liệu nến giá thực tế từ hệ thống Data Lake phục vụ cho mô hình AI và nghiên cứu.</p>
           </div>
           <div className="bg-emerald-50/60 p-3 rounded-xl border border-emerald-100 space-y-1">
             <span className="font-bold text-emerald-900 flex items-center gap-1.5">
@@ -98,7 +98,7 @@ export const DatasetExportView: React.FC = () => {
             <span className="font-bold text-purple-900 flex items-center gap-1.5">
               <CheckCircle2 size={14} className="text-purple-600" /> 3. Dữ Liệu Thật 100%
             </span>
-            <p>Kết nối trực tiếp DuckDB Engine trích xuất dữ liệu nến thực tế mà không cần qua dữ liệu giả lập.</p>
+            <p>Kết nối trực tiếp hệ thống dữ liệu để trích xuất dữ liệu </p>
           </div>
         </div>
       </div>
@@ -184,7 +184,7 @@ export const DatasetExportView: React.FC = () => {
         {/* Action Button */}
         <div className="pt-2 flex items-center justify-between border-t border-slate-100">
           <div className="text-xs font-mono text-slate-500">
-            Dữ liệu kết xuất từ DuckDB: <strong className="text-indigo-600 font-bold">Mã [{selectedTicker}] ({selectedFormat})</strong>
+            Dữ liệu kết xuất từ hệ thống: <strong className="text-indigo-600 font-bold">Mã [{selectedTicker}] ({selectedFormat})</strong>
           </div>
 
           <button
@@ -194,7 +194,7 @@ export const DatasetExportView: React.FC = () => {
             className="btn-primary py-3 px-8 text-xs font-bold flex items-center gap-2 cursor-pointer shadow-md shadow-indigo-200"
           >
             {isExporting ? <RefreshCw size={16} className="animate-spin" /> : <Download size={16} />}
-            {isExporting ? 'Đang trích xuất dữ liệu từ DuckDB...' : `📥 XUẤT FILE DỮ LIỆU THẬT (.${selectedFormat})`}
+            {isExporting ? 'Đang trích xuất dữ liệu...' : `📥 XUẤT FILE DỮ LIỆU THẬT (.${selectedFormat})`}
           </button>
         </div>
 
@@ -227,7 +227,7 @@ export const DatasetExportView: React.FC = () => {
           </div>
           <div className="bg-purple-50 p-4 rounded-xl border border-purple-200">
             <span className="text-purple-700 block text-[10px] font-bold">TRUY VẤN ENGINE</span>
-            <span className="text-xl font-black text-purple-800 mt-1 block">DuckDB Fast</span>
+            <span className="text-xl font-black text-purple-800 mt-1 block">High Performance</span>
           </div>
         </div>
       </div>

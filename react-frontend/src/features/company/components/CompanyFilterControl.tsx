@@ -53,7 +53,8 @@ export const CompanyFilterControl: React.FC<CompanyFilterControlProps> = ({
               placeholder="VD: FPT, VNM, Hòa Phát..."
               value={searchTerm}
               onChange={(e) => onSearchChange(e.target.value)}
-              className="input-field pl-9"
+              className="input-field"
+              style={{ paddingLeft: '2.5rem' }}
             />
           </div>
         </div>

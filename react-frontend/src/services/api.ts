@@ -53,9 +53,10 @@ export const getPrices = async (
   ticker: string,
   startDate?: string,
   endDate?: string,
-  limit = 1000
+  limit = 1000,
+  page = 1
 ) => {
-  const params: Record<string, unknown> = { ticker, page: 1, limit };
+  const params: Record<string, unknown> = { ticker, page, limit };
   if (startDate) params.start_date = startDate;
   if (endDate) params.end_date = endDate;
   return apiClient.get('/prices', { params });

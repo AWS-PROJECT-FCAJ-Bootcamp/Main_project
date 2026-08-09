@@ -1,29 +1,22 @@
-"""
-Pipeline router — API & AUTH layer
-===================================
-Trong kiến trúc 3 Lambda tách biệt:
-  - lambda_collector  : chạy pipeline thực (EventBridge trigger)
-  - lambda_processor  : ETL transform (S3 trigger)
-  - lambda_reader/api : chỉ phục vụ query data cho frontend ← file này
-
-Router này chỉ cung cấp 2 endpoint:
-  POST /pipeline/trigger  → invoke lambda_collector trực tiếp (manual run)
-  GET  /pipeline/status   → kiểm tra trạng thái pipeline gần nhất từ S3
-"""
 from __future__ import annotations
 
 import json
 import logging
 import os
+from threading import Lock
 
 import boto3
 from botocore.exceptions import ClientError
 from fastapi import APIRouter, Depends, HTTPException
 
 from src.api.dependencies import get_current_user
+from src.api.schemas.api_models import PipelineRunRequest
+from src.pipeline.ingestion import ingest_tickers
+from src.pipeline.transform import transform_raw_data
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/pipeline", tags=["Pipeline"])
+pipeline_lock = Lock()
 
 
 def _get_lambda_client():
@@ -133,3 +126,89 @@ def pipeline_status(
     except ClientError as exc:
         logger.error("S3 status check failed: %s", exc)
         raise HTTPException(status_code=502, detail=f"Could not check pipeline status: {exc}") from exc
+
+
+@router.post("/run")
+def run_pipeline(
+    request: PipelineRunRequest,
+    _current_user: dict = Depends(get_current_user),
+):
+    """
+    Run pipeline endpoint.
+    - Local: runs synchronously (ingest + transform).
+    - Cloud: invokes the collector Lambda asynchronously.
+    """
+    environment = os.environ.get("ENVIRONMENT", "local")
+
+    if environment == "local":
+        if not pipeline_lock.acquire(blocking=False):
+            raise HTTPException(status_code=409, detail="Another ingestion run is already in progress")
+        try:
+            from src.settings import get_settings
+            config = get_settings()
+            
+            # Run ingestion
+            ingestion = ingest_tickers(
+                request.tickers,
+                request.start_date.isoformat(),
+                request.end_date.isoformat(),
+                request.interval,
+                config=config,
+            )
+            
+            # Run transform if any succeeded
+            transformation = None
+            if ingestion.get("passed", 0) > 0:
+                transformation = transform_raw_data(input_roots=[config.raw_path], config=config)
+                
+            return {"ingestion": ingestion, "transformation": transformation}
+        except Exception as error:
+            logger.error("Pipeline failed: %s", error)
+            raise HTTPException(status_code=502, detail=f"Pipeline failed: {error}") from error
+        finally:
+            pipeline_lock.release()
+    else:
+        # Cloud environment: trigger lambda collector
+        collector_name = os.environ.get("COLLECTOR_LAMBDA_NAME", "financial-data-collector")
+        payload = {
+            "tickers": request.tickers,
+            "start_date": request.start_date.isoformat(),
+            "end_date": request.end_date.isoformat(),
+        }
+        try:
+            client = _get_lambda_client()
+            response = client.invoke(
+                FunctionName=collector_name,
+                InvocationType="Event",  # async
+                Payload=json.dumps(payload).encode(),
+            )
+            status = response.get("StatusCode", 0)
+            if status != 202:
+                raise HTTPException(
+                    status_code=502,
+                    detail=f"Lambda invoke returned unexpected status: {status}",
+                )
+            
+            # Return a compatible response for the frontend UI to display
+            return {
+                "message": "Pipeline triggered successfully in cloud",
+                "collector": collector_name,
+                "ingestion": {
+                    "requested": len(request.tickers),
+                    "passed": len(request.tickers),
+                    "failed": 0,
+                    "details": [
+                        {
+                            "ticker": t,
+                            "status": "PASS",
+                            "rows": 0,
+                            "note": "Triggered on AWS Cloud. Data will appear shortly."
+                        }
+                        for t in request.tickers
+                    ]
+                }
+            }
+        except ClientError as exc:
+            logger.error("Failed to invoke collector Lambda on run: %s", exc)
+            raise HTTPException(status_code=502, detail=f"Failed to trigger pipeline: {exc}") from exc
+

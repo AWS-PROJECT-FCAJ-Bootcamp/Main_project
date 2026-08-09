@@ -36,8 +36,8 @@ import type { PriceData } from '@/types';
 
 export const TechnicalChartsView: React.FC = () => {
   const navigate = useNavigate();
-  const [ticker, setTicker] = useState('FPT');
-  const [searchTicker, setSearchTicker] = useState('FPT');
+  const [ticker, setTicker] = useState('');
+  const [searchTicker, setSearchTicker] = useState('');
   const [showMA20, setShowMA20] = useState(true);
   const [showMA50, setShowMA50] = useState(true);
   const [showMA200, setShowMA200] = useState(true);
@@ -54,6 +54,7 @@ export const TechnicalChartsView: React.FC = () => {
   const { data: apiPrices, isLoading, refetch } = useQuery({
     queryKey: ['technical-charts-lightweight', ticker, startDateStr, endDateStr],
     queryFn: () => getPrices(ticker, startDateStr, endDateStr, 500),
+    enabled: !!ticker,
   });
 
   const priceDataList: PriceData[] = useMemo(() => {
@@ -197,7 +198,7 @@ export const TechnicalChartsView: React.FC = () => {
       <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs space-y-3">
         <div className="flex items-center gap-2 text-indigo-700 font-bold text-base">
           <Info size={20} className="text-indigo-600" />
-          <span>VIEW 4: HỆ THỐNG BIỂU ĐỒ KỸ THUẬT NẾN NHẬT (TECHNICAL STOCK CHARTS)</span>
+          <span>HỆ THỐNG BIỂU ĐỒ KỸ THUẬT NẾN NHẬT (TECHNICAL STOCK CHARTS)</span>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs text-slate-600 pt-2 border-t border-slate-100">
           <div className="bg-indigo-50/60 p-3 rounded-xl border border-indigo-100 space-y-1">
@@ -232,7 +233,8 @@ export const TechnicalChartsView: React.FC = () => {
                 placeholder="Nhập mã CK (FPT, VNM...)"
                 value={searchTicker}
                 onChange={(e) => setSearchTicker(e.target.value)}
-                className="input-field uppercase text-xs py-2 pl-9 font-mono bg-white border-slate-200 font-bold text-indigo-700"
+                className="input-field uppercase text-xs py-2 font-mono bg-white border-slate-200 font-bold text-indigo-700"
+                style={{ paddingLeft: '2.5rem' }}
               />
             </div>
             <button type="submit" className="btn-primary text-xs py-2 px-4 cursor-pointer font-bold">
@@ -334,7 +336,7 @@ export const TechnicalChartsView: React.FC = () => {
       {/* ── Main TradingView Candlestick Canvas Container ── */}
       {isLoading ? (
         <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center text-xs font-mono text-slate-500">
-          Đang đọc dữ liệu giá thực tế từ DuckDB cho biểu đồ {ticker}...
+          Đang đọc dữ liệu giá thực tế cho biểu đồ {ticker}...
         </div>
       ) : !hasRealData ? (
         <div className="bg-amber-50 rounded-2xl border border-amber-200 p-8 text-center space-y-4 shadow-sm">
@@ -346,7 +348,7 @@ export const TechnicalChartsView: React.FC = () => {
               CHƯA CÓ DỮ LIỆU NẾN GIÁ CHO MÃ [{ticker}]
             </h3>
             <p className="text-xs text-amber-800">
-              Mã cổ phiếu <strong className="font-mono">{ticker}</strong> chưa được cào dữ liệu vào Data Lake (`data/curated/ohlcv/`).
+              Mã cổ phiếu <strong className="font-mono">{ticker}</strong> chưa được nạp dữ liệu vào Data Lake.
             </p>
           </div>
 
@@ -356,7 +358,7 @@ export const TechnicalChartsView: React.FC = () => {
               onClick={() => navigate('/explorer')}
               className="btn-primary text-xs py-2.5 px-5 flex items-center gap-2 font-bold cursor-pointer"
             >
-              <Database size={15} /> Sang View 1 để cào dữ liệu cho mã [{ticker}] <ArrowRight size={14} />
+              <Database size={15} /> Kích hoạt nạp dữ liệu cho mã [{ticker}] <ArrowRight size={14} />
             </button>
           </div>
         </div>

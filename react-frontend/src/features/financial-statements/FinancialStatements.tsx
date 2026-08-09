@@ -15,16 +15,7 @@ export const FinancialStatements: React.FC = () => {
   });
 
   const companies: Company[] = useMemo(() => {
-    const list = companiesData?.data ?? [];
-    if (list.length === 0) {
-      return [
-        { ticker: 'FPT', name: 'CTCP FPT', exchange: 'HOSE' },
-        { ticker: 'VNM', name: 'CTCP Sữa Việt Nam', exchange: 'HOSE' },
-        { ticker: 'HPG', name: 'CTCP Tập đoàn Hòa Phát', exchange: 'HOSE' },
-        { ticker: 'MWG', name: 'CTCP Đầu tư Thế Giới Di Động', exchange: 'HOSE' },
-      ];
-    }
-    return list;
+    return companiesData?.data ?? [];
   }, [companiesData]);
 
   return (
