@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from mangum import Mangum
 
 from src.api.config import settings
-from src.api.routers import auth, companies, pipeline, prices, users
+from src.api.routers import auth, companies, pipeline, prices, users, financial_reports, financial_ratios
 from src.api.schemas.api_models import HealthCheckResponse
 
 app = FastAPI(
@@ -29,6 +29,8 @@ app.include_router(users.router, prefix=API_PREFIX)
 app.include_router(companies.router, prefix=API_PREFIX)
 app.include_router(prices.router, prefix=API_PREFIX)
 app.include_router(pipeline.router, prefix=API_PREFIX)
+app.include_router(financial_reports.router, prefix=API_PREFIX)
+app.include_router(financial_ratios.router, prefix=API_PREFIX)
 
 # Keep root-level routes for backward compatibility with existing frontend calls
 app.include_router(auth.router)
@@ -36,6 +38,8 @@ app.include_router(users.router)
 app.include_router(companies.router)
 app.include_router(prices.router)
 app.include_router(pipeline.router)
+app.include_router(financial_reports.router)
+app.include_router(financial_ratios.router)
 
 
 @app.get("/health", response_model=HealthCheckResponse, tags=["Health Check"])

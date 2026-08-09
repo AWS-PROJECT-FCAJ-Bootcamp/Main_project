@@ -142,7 +142,7 @@ class YahooFinanceSource:
                         quote = chart_data.get("indicators", {}).get("quote", [{}])[0]
                         if timestamps and quote:
                             df = pd.DataFrame({
-                                "time": pd.to_datetime(timestamps, unit="s").dt.strftime("%Y-%m-%d"),
+                                "time": pd.to_datetime(timestamps, unit="s").strftime("%Y-%m-%d"),
                                 "open": quote.get("open", []),
                                 "high": quote.get("high", []),
                                 "low": quote.get("low", []),
