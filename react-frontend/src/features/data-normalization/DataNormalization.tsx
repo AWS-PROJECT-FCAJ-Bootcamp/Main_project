@@ -105,25 +105,13 @@ const DEFAULT_METRIC_MAPPINGS: MetricMappingRule[] = [
 
 // Mock Quality Report Data
 const DEFAULT_QUALITY_REPORT: DataQualityReport = {
-  total_companies: 150,
-  qualified_companies: 128,
-  rejected_companies: 22,
+  total_companies: 0,
+  qualified_companies: 0,
+  rejected_companies: 0,
   min_years_required: 5,
-  missing_rate_overall: 2.4,
-  missing_by_metric: [
-    { metric_name: 'Chi phí lãi vay', missing_count: 12, missing_percentage: 8.0 },
-    { metric_name: 'Hàng tồn kho', missing_count: 5, missing_percentage: 3.3 },
-    { metric_name: 'Dòng tiền HĐKD (OCF)', missing_count: 4, missing_percentage: 2.6 },
-    { metric_name: 'Lợi nhuận chưa phân phối', missing_count: 3, missing_percentage: 2.0 },
-    { metric_name: 'Tài sản ngắn hạn', missing_count: 1, missing_percentage: 0.6 },
-    { metric_name: 'Doanh thu thuần', missing_count: 0, missing_percentage: 0.0 },
-  ],
-  outliers_detected: [
-    { ticker: 'AAA', metric: 'ROA', year: '2022', raw_value: 350.2, action: 'Winsorized 99% → 42.5%' },
-    { ticker: 'BBB', metric: 'EBIT / Interest Expense', year: '2023', raw_value: Infinity, action: 'Replaced Inf → NaN (Chi phí lãi vay = 0)' },
-    { ticker: 'CCC', metric: 'ROE', year: '2021', raw_value: -890.0, action: 'Winsorized 1% → -65.0%' },
-    { ticker: 'DDD', metric: 'Debt Ratio', year: '2020', raw_value: 99.8, action: 'Ghi nhận đòn bẩy quá cao' },
-  ],
+  missing_rate_overall: 0,
+  missing_by_metric: [],
+  outliers_detected: [],
 };
 
 export const DataNormalization: React.FC = () => {
@@ -158,6 +146,10 @@ export const DataNormalization: React.FC = () => {
   const qualityReport: DataQualityReport = useMemo(() => {
     return apiQualityReport?.data ?? DEFAULT_QUALITY_REPORT;
   }, [apiQualityReport]);
+
+  const isFallback = useMemo(() => {
+    return !apiMappings && !apiQualityReport;
+  }, [apiMappings, apiQualityReport]);
 
   // Handle adding new alias manually
   const handleAddAlias = (standardKey: string) => {
@@ -230,6 +222,15 @@ export const DataNormalization: React.FC = () => {
           </button>
         </div>
       </div>
+
+      {isFallback && (
+        <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-700 font-semibold flex items-center gap-2.5 shadow-sm transition-all animate-fadeIn">
+          <span className="text-sm">⚠️</span>
+          <span>
+            Hệ thống đang hiển thị cấu trúc chuẩn hóa & làm sạch dữ liệu thô mẫu (Spec Mục 5) để tham chiếu nghiệp vụ khi API chuyên dụng chưa được tích hợp vào Data Lake chính.
+          </span>
+        </div>
+      )}
 
       {/* ── TAB 1: METRIC MAPPING ENGINE ── */}
       {activeTab === 'MAPPINGS' && (

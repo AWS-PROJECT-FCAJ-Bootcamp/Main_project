@@ -1,205 +1,148 @@
-# Financial Data Platform PoC
+# Vietnam Financial Distress Prediction System
 
-PoC local-first ghép hoàn chỉnh nguồn dữ liệu chứng khoán, ingestion, Raw/Curated Data Lake, FastAPI và Streamlit. Dự án dùng **`uv`** để quản lý dependency, **`uvicorn`** để chạy backend và **`.env`** chỉ để chứa cấu hình/secrets cục bộ.
+<div align="center">
+  <img src="https://img.shields.io/badge/Amazon_AWS-232F3E?style=for-the-badge&logo=amazon-aws&logoColor=white" alt="AWS" />
+  <img src="https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white" alt="Python" />
+  <img src="https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=FastAPI&logoColor=white" alt="FastAPI" />
+  <img src="https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB" alt="React" />
+  <img src="https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white" alt="Tailwind CSS" />
+  <img src="https://img.shields.io/badge/Terraform-7B42BC?style=for-the-badge&logo=terraform&logoColor=white" alt="Terraform" />
+  <img src="https://img.shields.io/badge/scikit_learn-F7931E?style=for-the-badge&logo=scikit-learn&logoColor=white" alt="Scikit-Learn" />
+</div>
 
-## 1. Luồng dữ liệu
+<br/>
+
+![AWS Architecture](./images/Architecture.jpg)
+
+Nền tảng **AWS Cloud & Serverless** tự động hóa thu thập, phân tích và dự đoán nguy cơ kiệt quệ tài chính doanh nghiệp.
+
+---
+
+## 1. Tóm tắt điều hành
+Vietnam Financial Distress Prediction System được thiết kế nhằm xây dựng một giải pháp toàn diện trên nền tảng AWS Cloud, giúp tự động thu thập, chuẩn hóa dữ liệu báo cáo tài chính (BCTC) và giá thị trường của các doanh nghiệp niêm yết trên 3 sàn chứng khoán Việt Nam (HOSE, HNX, UPCOM). 
+
+Hệ thống ứng dụng kiến trúc AWS Serverless kết hợp các mô hình Machine Learning (Logistic Regression, Random Forest, XGBoost, LightGBM, CatBoost) để tính toán bộ chỉ số tài chính (Liquidity, Profitability, Leverage, Size & Growth), tự động gán nhãn rủi ro (Rule-based & Altman Z-Score Emerging Market), và phát hiện sớm nguy cơ kiệt quệ tài chính (Financial Distress) / phá sản. Nền tảng tích hợp Web Dashboard (AWS Amplify, React), bảo mật với Amazon Cognito, phân quyền API qua API Gateway và gửi cảnh báo tự động qua Amazon SES cho các nhà đầu tư, chuyên viên phân tích tài chính và quản trị rủi ro.
+
+---
+
+## 2. Tuyên bố vấn đề
+
+### Vấn đề hiện tại
+Hiện nay, dữ liệu tài chính tại Việt Nam rải rác trên nhiều nguồn (vnstock, TCBS, CafeF, Vietstock, VCI, MAS, KBS) với định dạng không nhất quán (Long-form vs Wide-form), nhiều chỉ tiêu bị phân mảnh hoặc thiếu hụt. Việc thu thập và phân tích BCTC thủ công tiêu tốn rất nhiều thời gian, dễ phát sinh sai sót và không thể theo dõi liên tục hàng nghìn doanh nghiệp. Bên cạnh đó, các công cụ phân tích hiện tại thiếu khả năng gán nhãn tự động theo quy định và mô hình cảnh báo sớm kiệt quệ tài chính chuyên biệt cho thị trường chứng khoán Việt Nam.
+
+### Giải pháp
+Nền tảng tận dụng **Amazon EventBridge** và **AWS Step Functions** để điều phối các tiến trình cào dữ liệu tự động từ các nguồn API/web qua **AWS Lambda / ECS Task**, lưu trữ dữ liệu thô vào **Amazon S3 (raw)**. Tiến trình ETL bằng **AWS Glue Job** thực hiện chuẩn hóa chỉ tiêu, xử lý dữ liệu khuyết thiếu (missing data) và Winsorization, sau đó lưu dữ liệu đã làm sạch dưới dạng Parquet vào **Amazon S3 (curated)**. **AWS Glue Crawler** và **Glue Data Catalog** tự động cập nhật metadata, cho phép **Amazon Athena** truy vấn SQL tức thì. Bộ engine tính toán chỉ số và gán nhãn tích hợp cả chuẩn Rule-based thực tế tại Việt Nam (lỗ lũy kế 2 năm, VCSH âm, EBIT không đủ trả lãi vay, OCF âm 3 năm) và chỉ số Altman Z-Score. Ứng dụng web fullstack hosted trên **AWS Amplify** với **Amazon Cognito** quản lý xác thực và **Amazon SES** tự động gửi email cảnh báo khi Z-Score rơi vào vùng nguy hiểm (Distress Zone).
+
+### Lợi ích và hoàn vốn đầu tư (ROI)
+- **Tự động hóa 100% luồng dữ liệu:** Đóng gói toàn bộ quy trình từ cào dữ liệu, làm sạch, lưu trữ Data Lake đến gán nhãn và dự đoán ML.
+- **Cảnh báo sớm & Chính xác:** Giúp nhà đầu tư và tổ chức tài chính phát hiện rủi ro kiệt quệ tài chính trước 1–2 năm với chỉ số Recall cao.
+- **Tối ưu chi phí vận hành (Serverless):** Chi phí cơ sở hạ tầng cực kỳ tiết kiệm nhờ mô hình pay-as-you-go của AWS Serverless, ước tính khoảng 1,50 – 3,00 USD/tháng cho quy mô vận hành chuẩn.
+- **Khả năng mở rộng vượt trội:** Sẵn sàng xử lý dữ liệu cho hơn 1.600+ doanh nghiệp niêm yết trên cả 3 sàn HOSE, HNX, UPCOM.
+
+---
+
+## 3. Kiến trúc giải pháp
+
+Hệ thống áp dụng kiến trúc Serverless 5 phân vùng chuyên biệt trên AWS Cloud:
+
+### Dịch vụ AWS sử dụng
+- **Amazon EventBridge:** Kích hoạt cron schedule định kỳ cho luồng thu thập dữ liệu BCTC quý/năm.
+- **AWS Step Functions:** Điều phối workflow thu thập dữ liệu đa luồng, retry và quản lý checkpointing.
+- **AWS Lambda / ECS:** Gọi API/Crawl dữ liệu tài chính từ vnstock, TCBS, CafeF, Vietstock và xử lý backend REST API.
+- **Amazon S3:** Lưu trữ Data Lake gồm 2 bucket (S3 raw data cho JSON/CSV và S3 curated data cho Parquet).
+- **AWS Glue:** Glue Jobs (Python/Spark ETL) làm sạch và biến đổi dữ liệu; Glue Crawlers quét schema; Glue Data Catalog lưu trữ metadata.
+- **Amazon Athena:** Truy vấn SQL Serverless trực tiếp trên S3 curated data với tốc độ cao.
+- **AWS Amplify:** Hosting giao diện Web Dashboard (React).
+- **Amazon Cognito:** Quản lý đăng nhập, phân quyền (Admin / Guest / Analyst) và cấp JWT token.
+- **Amazon API Gateway:** RESTful API Gateway bảo mật tiếp nhận request từ Web Frontend.
+- **AWS WAF:** Tường lửa bảo vệ API Gateway và Amplify khỏi tấn công mạng (DDoS, SQL Injection).
+- **Amazon SES:** Tự động gửi email cảnh báo rủi ro kiệt quệ tài chính cho người dùng.
+
+### Thiết kế thành phần
+- **Ingestion Layer:** EventBridge kích hoạt Step Functions gọi Lambda/ECS Task thu thập dữ liệu 3 BCTC (Bảng cân đối kế toán, Kết quả kinh doanh, Lưu chuyển tiền tệ) và giá cổ phiếu, loại bỏ hoàn toàn ngành tài chính (Ngân hàng, Chứng khoán, Bảo hiểm, Quỹ đầu tư).
+- **Storage Layer:** S3 Raw lưu trữ dữ liệu gốc dạng JSON/CSV; S3 Curated lưu trữ dữ liệu đã chuẩn hóa, làm sạch và gán nhãn dạng Parquet phân theo năm/quý.
+- **Processing & ETL Layer:** AWS Glue Job chuẩn hóa tên chỉ tiêu, lọc doanh nghiệp đủ 5 năm dữ liệu, xử lý outlier (Winsorize 1%-99%), tính bộ chỉ số tài chính (CR, WCTA, ROA, ROE, EBIT_REV, DAR, STDR, LTDR, LogAsset, MC_Debt) và gán nhãn distress.
+- **Query & ML Layer:** Glue Crawler trích xuất schema vào Data Catalog; Athena phục vụ truy vấn ad-hoc và backend API. (Định hướng tương lai: Tích hợp mô hình Machine Learning như XGBoost, Random Forest để huấn luyện và dự đoán rủi ro chuyên sâu).
+- **User Interface & Alerting:** Amplify giao diện Dashboard trực quan; API Gateway + Lambda Backend xử lý yêu cầu; Cognito đảm bảo an toàn truy cập; SES phát thông báo cảnh báo tức thì.
+
+---
+
+## 4. Cấu trúc thư mục (Directory Structure)
+
+Dự án được tổ chức theo tiêu chuẩn Monorepo, phân tách rõ ràng giữa hạ tầng, luồng xử lý dữ liệu và ứng dụng giao diện (Local to AWS):
 
 ```text
-Vnstock Free Unified API (VNSTOCK_API_KEY, 1D, max 60 RPM)
-      │
-      ▼
-Ingestion + retry + schema validation
-      │
-      ▼
-data/raw/ohlcv/year=YYYY/month=MM/day=DD/batch_*.json
-      │
-      ▼
-Clean + deduplicate + Return/MA20/RSI14
-      │
-      ▼
-data/curated/ohlcv/ticker=<TICKER>/part-000.parquet
-      │
-      ▼
-DuckDB → FastAPI → Streamlit
-```
-
-Live ingestion dùng public Unified API của `vnstock 4.x`. Adapter yêu cầu `VNSTOCK_API_KEY`, chỉ nhận interval `1D` và chặn cấu hình vượt 60 request/phút của Free tier. Vnstock không công bố direct REST endpoint contract; `Market` là client chính thức kết nối REST source bên dưới.
-
-Docker Compose bootstrap từ raw evidence đã commit để lần chạy đầu không phụ thuộc mạng/provider. Sau khi hệ thống lên và key đã được điền trong `.env`, trang **Data Explorer** có thể gọi ingestion thật tới Vnstock Free API.
-
-## 2. Cấu trúc chính
-
-```text
-.
-├── frontend/                 # Streamlit consumption UI
-│   ├── app.py
-│   ├── utils/api_client.py   # HTTP client duy nhất nối FE → BE
-│   └── views/
+Main_project/
+├── .github/workflows/       # (CI/CD) Tự động hóa kiểm thử và triển khai hạ tầng lên AWS.
+├── react-frontend/          # (Frontend) Source code Web Dashboard viết bằng React (Vite/Tailwind). Triển khai trên AWS Amplify.
 ├── src/
-│   ├── api/                  # FastAPI, DuckDB, routers, schemas, services
-│   ├── pipeline/             # Source adapter, ingestion, validation, transform, CLI
-│   └── settings.py           # Cấu hình chung từ environment/.env
-├── data/
-│   ├── raw/                  # Runtime output, không commit
-│   └── curated/              # Runtime output, không commit
-├── reports/raw/              # Evidence raw dùng để bootstrap PoC
-├── universe/                 # Universe và company metadata
-├── tests/                    # Pipeline và API integration tests
-├── docs/                     # Requirements, architecture và data contract
-├── pyproject.toml            # Nguồn dependency duy nhất
-├── uv.lock                   # Phiên bản dependency đã khóa
-├── Dockerfile
-└── docker-compose.yml
+│   ├── api/                 # (Backend) FastAPI xử lý requests, kết nối Athena. Triển khai dưới dạng Lambda function qua API Gateway.
+│   ├── pipeline/            # (Data Pipeline) Code xử lý ETL, tính toán chỉ số, mô hình ML nội bộ (Local/Glue).
+│   ├── lambda_collector/    # (AWS Lambda) Các hàm thu thập dữ liệu thô (Ingestion).
+│   ├── lambda_processor/    # (AWS Lambda) Các hàm xử lý ETL sự kiện nhỏ lẻ.
+│   ├── lambda_reader/       # (AWS Lambda) Các hàm đọc dữ liệu/truy vấn.
+│   └── lambda_worker/       # (AWS Lambda) Các tiến trình tính toán nền (Background workers).
+├── terraform/               # (IaC) Mã nguồn Infrastructure as Code thiết lập toàn bộ tài nguyên trên AWS.
+├── tests/                   # (Testing) Unit tests, integration tests, E2E tests đảm bảo chất lượng hệ thống (chạy qua CI).
+├── reports/                 # (Analytics) Thư mục chứa các kết quả báo cáo local (CSV/JSON), smoke tests dữ liệu.
+├── images/                  # (Assets) Chứa các tài nguyên tĩnh như sơ đồ kiến trúc (Architecture.jpg).
+└── uv.lock & settings.py    # (Config) Cấu hình môi trường Python và thư viện phụ thuộc.
 ```
 
-Các script cũ trong `src/` được giữ tạm tại `src/legacy/` chỉ để tham khảo lịch sử; runtime mới không phụ thuộc vào chúng.
+---
 
-## 3. Chạy nhanh bằng Docker Compose
+## 5. Triển khai kỹ thuật
 
-Yêu cầu: Docker Desktop/Docker Engine có Compose.
+### Yêu cầu kỹ thuật
+- **Data Engine:** Python 3.11+, vnstock, pandas, pyarrow, numpy, scikit-learn, xgboost, lightgbm, catboost.
+- **AWS Services & Infrastructure:** Terraform / AWS CDK để quản lý Infrastructure as Code (IaC).
+- **Backend & Web App:** FastAPI cho REST API, React cho Frontend, Zustand cho Client State Management, Tailwind CSS cho giao diện.
+- **Bảo mật & Chuẩn hóa:** SSL/TLS, WAF, OAuth2 / JWT với Amazon Cognito, tuân thủ nguyên tắc Least Privilege trên IAM Roles.
 
-```bash
-copy .env.example .env
-docker compose up --build
-```
+---
 
-Trước khi chạy live ingestion, mở `.env` và điền `VNSTOCK_API_KEY`. Bootstrap, backend consumption và FE đọc curated vẫn chạy khi key trống; chỉ thao tác live ingestion sẽ fail-fast.
+## 6. Ước tính ngân sách (AWS Pricing)
+Mô hình Serverless mang lại lợi thế tối ưu chi phí (Pay-as-you-go). Ước tính cho quy mô tiêu chuẩn:
 
-Trên macOS/Linux dùng `cp .env.example .env`.
+- **Amazon S3 Standard** (Raw & Curated 10 GB, 5.000 requests): 0,30 USD/tháng
+- **AWS Lambda** (Inbound Ingestion & Backend API 50.000 requests): 0,20 USD/tháng
+- **AWS Step Functions & EventBridge:** 0,10 USD/tháng
+- **AWS Glue ETL Jobs & Crawlers** (chạy theo lịch tháng/quý): 0,80 USD/tháng
+- **Amazon Athena** (Quét < 10 GB Parquet/tháng): 0,05 USD/tháng
+- **AWS Amplify & Amazon Cognito** (Guest & User access): 0,35 USD/tháng
+- **Amazon API Gateway & AWS WAF:** 0,15 USD/tháng
+- **Amazon SES** (Email Alerts < 1.000 emails/tháng): 0,05 USD/tháng
 
-Các địa chỉ:
+**Tổng cộng:** ~2,00 USD/tháng (~24,00 USD/năm).
+> Chi phí dữ liệu & phát triển: 0 USD (tận dụng nguồn dữ liệu mở vnstock và công cụ mã nguồn mở).
 
-- Frontend: <http://localhost:8501>
-- Backend health: <http://localhost:8000/health>
-- Swagger UI: <http://localhost:8000/docs>
+---
 
-Compose chạy theo thứ tự:
+## 7. Đánh giá rủi ro
 
-1. `pipeline` bootstrap Curated Parquet từ raw evidence nếu curated đang trống.
-2. `backend` chỉ khởi động sau khi bootstrap thành công.
-3. `frontend` chỉ khởi động sau khi backend healthcheck thành công.
+### Ma trận rủi ro
+- Thay đổi cấu trúc API/Website nguồn (vnstock/CafeF/TCBS): Ảnh hưởng cao, xác suất trung bình.
+- Dữ liệu BCTC khuyết thiếu hoặc bị sai lệch từ nguồn: Ảnh hưởng trung bình, xác suất cao.
+- Lệch nhãn rủi ro (Imbalanced Dataset giữa doanh nghiệp lành mạnh và kiệt quệ): Ảnh hưởng cao, xác suất cao.
+- Vượt ngân sách AWS do truy vấn Athena/Glue chạy không kiểm soát: Ảnh hưởng trung bình, xác suất thấp.
 
-Frontend dùng Arrow `system` memory allocator để tránh lỗi native khi Streamlit
-serialize `st.dataframe` nhiều lần. Compose cũng kiểm tra
-`/_stcore/health` và tự khởi động lại frontend nếu tiến trình thoát bất thường.
+### Chiến lược giảm thiểu
+- **Nguồn dữ liệu:** Thiết lập cơ chế đa nguồn (VCI, MAS, KBS) và fallback parser tự động trong Ingestion Layer.
+- **Dữ liệu khuyết thiếu:** Áp dụng bộ lọc bắt buộc 5 năm liên tục, loại bỏ ngành tài chính và dùng kỹ thuật Winsorize xử lý nhiễu.
+- **Imbalanced Dataset:** Áp dụng kỹ thuật SMOTE / Class Weighting và tập trung tối ưu metric Recall đối với lớp Distress (Class 1).
+- **Chi phí AWS:** Thiết lập AWS Budget Alerts, tối ưu lưu trữ Parquet có Partitioning để Athena quét tối thiểu số bytes.
 
-Dừng hệ thống:
+### Kế hoạch dự phòng
+- Lưu trữ bản sao Local/Parquet trên S3 để khôi phục nhanh nếu tiến trình ETL gặp sự cố.
+- Sử dụng cấu hình Terraform để tái khởi tạo toàn bộ hạ tầng Serverless trong thời gian ngắn.
 
-```bash
-docker compose down
-```
+---
 
-Xóa dữ liệu runtime để bootstrap lại:
+## 8. Kết quả kỳ vọng
+1. **Cải tiến kỹ thuật:** Xây dựng hệ thống Data Lake tự động hóa 100% trên AWS, thay thế hoàn toàn quy trình phân tích BCTC thủ công. 
+2. **Giá trị dài hạn:** Cung cấp nền tảng dữ liệu tài chính Việt Nam chuẩn hóa, sẵn sàng mở rộng cho các bài toán định giá, chấm điểm tín dụng (Credit Scoring) hoặc phân tích định lượng (Quantitative Trading).
 
-```powershell
-Remove-Item -Recurse -Force data\raw\ohlcv, data\curated\ohlcv
-docker compose up --build
-```
+---
 
-Chỉ xóa đúng hai thư mục runtime trên; raw evidence trong `reports/raw/` vẫn được giữ.
-
-## 4. Chạy local bằng uv
-
-Yêu cầu: cài `uv`. Repo cố định Python 3.12 bằng `.python-version`.
-
-```bash
-copy .env.example .env
-uv sync --frozen
-uv run python -m src.pipeline.cli bootstrap
-```
-
-Mở hai terminal:
-
-```bash
-uv run uvicorn src.api.main:app --reload --host 0.0.0.0 --port 8000
-```
-
-```bash
-ARROW_DEFAULT_MEMORY_POOL=system PYTHONFAULTHANDLER=1 uv run streamlit run frontend/app.py --server.port 8501
-```
-
-Trên PowerShell, đặt biến môi trường trước khi chạy frontend:
-
-```powershell
-$env:ARROW_DEFAULT_MEMORY_POOL = "system"
-$env:PYTHONFAULTHANDLER = "1"
-uv run streamlit run frontend/app.py --server.port 8501
-```
-
-Không dùng `pip install -r requirements.txt`; `pyproject.toml` và `uv.lock` là nguồn dependency duy nhất.
-
-## 5. Chạy pipeline
-
-Bootstrap deterministic từ raw evidence:
-
-```bash
-uv run python -m src.pipeline.cli bootstrap
-```
-
-Ingest dữ liệu thật và tự cập nhật curated:
-
-```bash
-uv run python -m src.pipeline.cli ingest --tickers FPT VCB --start 2025-01-01 --end 2025-12-31 --interval 1D
-```
-
-Chỉ transform dữ liệu hiện có trong `data/raw/ohlcv`:
-
-```bash
-uv run python -m src.pipeline.cli transform
-```
-
-Mỗi request nguồn có tối đa 3 lần thử với exponential backoff. Record vi phạm data contract bị đánh dấu lỗi và không đi vào curated.
-
-## 6. API contract chính
-
-- `GET /health`: trạng thái backend và curated layer.
-- `GET /companies?page=1&limit=100`: ticker có dữ liệu curated, được làm giàu từ universe.
-- `GET /prices?ticker=TLH&start_date=2025-01-01&end_date=2025-12-31`: OHLCV và chỉ báo.
-- `GET /prices/export?ticker=TLH&format=csv`: ZIP chứa dữ liệu và manifest.
-- `POST /pipeline/run`: ingestion `1D` quy mô nhỏ từ Vnstock Free API, sau đó transform curated.
-
-Ví dụ body cho endpoint pipeline:
-
-```json
-{
-  "tickers": ["FPT", "VCB"],
-  "start_date": "2025-01-01",
-  "end_date": "2025-12-31",
-  "interval": "1D"
-}
-```
-
-Schema OHLCV thống nhất: `ticker`, `trading_date`, `open_price`, `high_price`, `low_price`, `close_price`, `volume`. Curated bổ sung `return_pct`, `ma20`, `rsi_14`.
-
-## 7. Kiểm thử
-
-```bash
-uv sync --frozen
-uv run pytest -m "not live" --timeout=30 --cov=src --cov=frontend --cov-fail-under=80
-docker compose config
-```
-
-Bộ test được chia theo Pipeline unit, API unit/integration, Streamlit user flow và local latency. Mỗi lần chạy sinh báo cáo JSON/CSV trong `reports/tests/`; GitHub Actions còn xuất JUnit và coverage XML. Xem lệnh chạy từng partition, traceability matrix và các gap chưa thể tự động hóa tại [docs/testing.md](docs/testing.md).
-
-Regression test frontend chạy nhiều lần Arrow IPC serialization trong tiến trình
-con. Nếu thư viện native segmentation fault, pytest nhận mã thoát khác `0` thay
-vì làm chết toàn bộ test runner.
-
-Bootstrap hiện được xác minh với raw evidence gồm 25.703 record của 100 ticker. Con số có thể thay đổi khi raw runtime mới được ingest.
-
-## 8. Cấu hình và bảo mật
-
-- Commit `.env.example`, không commit `.env`.
-- Chỉ điền `VNSTOCK_API_KEY` trong `.env` local hoặc GitHub Actions repository secret cùng tên.
-- Không đưa API key vào frontend, source, Dockerfile hoặc Compose YAML.
-- Compose đọc `.env` nếu file tồn tại; các giá trị không bí mật có default an toàn.
-- `data/raw/` và `data/curated/` là runtime data và bị ignore; `reports/raw/` là evidence PoC đã có trong lịch sử repo.
-- CORS local mặc định chỉ cho `http://localhost:8501`; thay đổi bằng `CORS_ORIGINS`.
-
-## 9. Phạm vi PoC
-
-PoC chứng minh tích hợp và khả năng của nhóm trên local. Authentication hiện chỉ là UI demo; ingestion chạy đồng bộ và giới hạn cho batch nhỏ; chưa có scheduler, distributed queue, object storage, Glue Catalog hay production IAM. Các thành phần AWS/Terraform trong repo là tài liệu hướng phát triển, không thuộc runtime Compose hiện tại.
-
-Chi tiết yêu cầu và quyết định kiến trúc xem tại [docs/requirements.md](docs/requirements.md) và [docs/architecture.md](docs/architecture.md).
-
-Contract Vnstock Free, cách giữ API key và hướng dẫn bật manual live CI được mô tả tại [docs/provider-auth.md](docs/provider-auth.md).
+## 9. Định hướng tương lai (Future Work)
+- **Phát triển Engine Chỉ số, Gán nhãn & ML Pipeline:** Đang trong quá trình nghiên cứu và cố gắng triển khai trong tương lai. Trọng tâm là hoàn thiện Ratio Engine, Distress Labeling Engine, tiến hành huấn luyện và đánh giá các mô hình ML (XGBoost, Random Forest) để đưa ra cảnh báo sớm nguy cơ kiệt quệ tài chính chuyên sâu dựa trên chỉ số Recall & AUC-ROC.

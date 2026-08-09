@@ -11,18 +11,21 @@ export const AuthButton: React.FC = () => {
   if (!isCognitoConfigured) {
     if (localUser) {
       return (
-        <div className="flex items-center gap-2">
-          <div className="flex items-center gap-1.5 bg-slate-100 border border-slate-200 text-slate-800 px-2.5 py-1 rounded-lg text-xs font-mono">
-            <ShieldCheck size={13} className="text-indigo-600" />
-            <span className="font-bold">{localUser}</span>
+        <div className="flex items-center gap-2 bg-white p-1 pr-2 rounded-full border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
+          <div className="w-7 h-7 rounded-full bg-indigo-600 text-white flex items-center justify-center text-xs font-bold shadow-inner">
+            {localUser.charAt(0).toUpperCase()}
+          </div>
+          <div className="flex-col hidden sm:flex px-1">
+            <span className="text-xs font-bold text-slate-800 leading-tight">{localUser}</span>
+            <span className="text-[10px] text-slate-500 font-medium leading-tight">Admin</span>
           </div>
           <button
             type="button"
             onClick={localLogout}
-            className="text-xs text-slate-500 hover:text-red-600 p-1 font-semibold cursor-pointer"
+            className="ml-1 p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-all"
             title="Đăng xuất local"
           >
-            <LogOut size={13} />
+            <LogOut size={14} />
           </button>
         </div>
       );
@@ -70,10 +73,13 @@ const CognitoAuthButtonInternal: React.FC = () => {
   if (auth.isAuthenticated) {
     const userEmail = auth.user?.profile?.email || auth.user?.profile?.preferred_username || 'Cognito User';
     return (
-      <div className="flex items-center gap-3">
-        <div className="flex items-center gap-2 bg-indigo-50 border border-indigo-100 text-indigo-900 px-3 py-1.5 rounded-xl text-xs font-mono">
-          <ShieldCheck size={14} className="text-emerald-600" />
-          <span className="font-bold">{userEmail}</span>
+      <div className="flex items-center gap-2 bg-white p-1 pr-2 rounded-full border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
+        <div className="w-7 h-7 rounded-full bg-emerald-600 text-white flex items-center justify-center text-xs font-bold shadow-inner">
+          {userEmail.charAt(0).toUpperCase()}
+        </div>
+        <div className="flex-col hidden sm:flex px-1 max-w-[120px]">
+          <span className="text-xs font-bold text-slate-800 truncate leading-tight">{userEmail}</span>
+          <span className="text-[10px] text-slate-500 font-medium truncate leading-tight">Cognito</span>
         </div>
         <button
           type="button"
@@ -81,9 +87,10 @@ const CognitoAuthButtonInternal: React.FC = () => {
             auth.removeUser();
             signOutRedirect();
           }}
-          className="btn-secondary text-xs py-1.5 px-3 flex items-center gap-1.5 text-slate-700 bg-white border-slate-200 hover:bg-slate-100 cursor-pointer font-bold"
+          className="ml-1 p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-all"
+          title="Đăng xuất Cognito"
         >
-          <LogOut size={13} className="text-red-500" /> Sign Out
+          <LogOut size={14} />
         </button>
       </div>
     );

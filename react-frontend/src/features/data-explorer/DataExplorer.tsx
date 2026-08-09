@@ -21,7 +21,7 @@ import type { PriceData } from '@/types';
 
 export const DataExplorer: React.FC = () => {
   const [dataSource, setDataSource] = useState('VNSTOCK_FREE');
-  const [selectedTickers, setSelectedTickers] = useState('FPT, VNM, VCB, HPG');
+  const [selectedTickers, setSelectedTickers] = useState('');
   const [startDate, setStartDate] = useState('2025-05-09');
   const [endDate, setEndDate] = useState('2026-08-07');
   const [intervalVal, setIntervalVal] = useState('1D');
@@ -30,9 +30,9 @@ export const DataExplorer: React.FC = () => {
   const [progressPct, setProgressPct] = useState(0);
   const [logs, setLogs] = useState<Array<{ timestamp: string; level: 'INFO' | 'SUCCESS' | 'ERROR'; message: string }>>([]);
   const [pipelineResult, setPipelineResult] = useState<any>(null);
-  const [ingestedTickers, setIngestedTickers] = useState<string[]>(['FPT', 'VNM', 'VCB', 'HPG']);
+  const [ingestedTickers, setIngestedTickers] = useState<string[]>([]);
 
-  const [previewTicker, setPreviewTicker] = useState('FPT');
+  const [previewTicker, setPreviewTicker] = useState('');
   const [previewData, setPreviewData] = useState<PriceData[]>([]);
   const [isLoadingPreview, setIsLoadingPreview] = useState(false);
 
@@ -51,10 +51,18 @@ export const DataExplorer: React.FC = () => {
     e.preventDefault();
     if (!selectedTickers.trim()) return;
 
-    const tickers = selectedTickers
+    const rawTickers = selectedTickers
       .split(',')
-      .map((t) => t.trim().toUpperCase())
+      .map((t) => t.trim())
       .filter(Boolean);
+
+    const invalidTickers = rawTickers.filter((t) => !/^[A-Za-z0-9._-]+$/.test(t));
+    if (invalidTickers.length > 0) {
+      alert(`Mã chứng khoán không hợp lệ: "${invalidTickers.join('", "')}". Mã chỉ được chứa chữ cái, số, dấu chấm (.), dấu gạch dưới (_), hoặc dấu gạch ngang (-).`);
+      return;
+    }
+
+    const tickers = rawTickers.map((t) => t.toUpperCase());
 
     if (tickers.length === 0) return;
 
@@ -98,7 +106,7 @@ export const DataExplorer: React.FC = () => {
       if (detailsList.length > 0) {
         detailsList.forEach((d: { ticker: string; status: string; rows?: number; error_code?: string }) => {
           if (d.status === 'PASS') {
-            addLog('SUCCESS', `✅ Ticker [${d.ticker}]: Cào & Kiểm duyệt HỢP LỆ (${d.rows || 0} nến) → Đã lưu Parquet vào data/curated/ohlcv/ticker=${d.ticker}`);
+            addLog('SUCCESS', `✅ Ticker [${d.ticker}]: Cào & Kiểm duyệt HỢP LỆ (${d.rows || 0} nến) → Đã lưu vào Data Lake.`);
           } else {
             addLog('ERROR', `❌ Ticker [${d.ticker}]: THẤT BẠI (${d.error_code || 'SOURCE_ERROR'} — Mã không tồn tại hoặc nhà cung cấp dữ liệu không có sẵn). KHÔNG lưu file.`);
           }
@@ -142,7 +150,7 @@ export const DataExplorer: React.FC = () => {
       <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs space-y-3">
         <div className="flex items-center gap-2 text-indigo-700 font-bold text-base">
           <Info size={20} className="text-indigo-600" />
-          <span>VIEW 1: KHÁM PHÁ VÀ KÍCH HOẠT CÀO DỮ LIỆU (DATA EXPLORER & INGESTION TRIGGER)</span>
+          <span>KHÁM PHÁ VÀ KÍCH HOẠT CÀO DỮ LIỆU (DATA EXPLORER & INGESTION)</span>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs text-slate-600 pt-2 border-t border-slate-100">
           <div className="bg-indigo-50/60 p-3 rounded-xl border border-indigo-100 space-y-1">
@@ -155,7 +163,7 @@ export const DataExplorer: React.FC = () => {
             <span className="font-bold text-emerald-900 flex items-center gap-1.5">
               <FileCheck size={14} className="text-emerald-600" /> 2. Lưu Trữ Data Lake Parquet
             </span>
-            <p>Dữ liệu sau khi kiểm duyệt hợp lệ được tự động lưu trực tiếp dạng nén **Parquet S3** tại `data/curated/ohlcv/ticker=MÃ`.</p>
+            <p>Dữ liệu sau khi kiểm duyệt hợp lệ được tự động lưu trực tiếp dạng nén **Parquet** trong phân vùng Data Lake.</p>
           </div>
           <div className="bg-purple-50/60 p-3 rounded-xl border border-purple-100 space-y-1">
             <span className="font-bold text-purple-900 flex items-center gap-1.5">
@@ -181,8 +189,8 @@ export const DataExplorer: React.FC = () => {
               onChange={(e) => setDataSource(e.target.value)}
               className="input-field text-xs font-semibold bg-white border-slate-200"
             >
-              <option value="VNSTOCK_FREE">Vnstock API (Chứng khoán Việt Nam — HOSE/HNX)</option>
-              <option value="YAHOO_FINANCE">Yahoo Finance (Chứng khoán VN & Quốc tế — Miễn phí 100%, Không cần API Key)</option>
+              <option value="VNSTOCK_FREE">Vnstock API</option>
+              <option value="YAHOO_FINANCE">Yahoo Finance</option>
             </select>
           </div>
 
@@ -256,7 +264,7 @@ export const DataExplorer: React.FC = () => {
             type="text"
             value={selectedTickers}
             onChange={(e) => setSelectedTickers(e.target.value)}
-            placeholder="FPT, VNM, VCB, HPG..."
+            placeholder="Ví dụ: FPT, VNM, VCB, HPG"
             className="input-field text-xs font-mono uppercase bg-white border-slate-200 font-bold text-indigo-700"
           />
         </div>
@@ -264,7 +272,7 @@ export const DataExplorer: React.FC = () => {
         {/* Action Button */}
         <div className="pt-2 flex items-center justify-between border-t border-slate-100">
           <div className="text-xs font-mono text-slate-500">
-            Dữ liệu sẽ được tự động làm sạch và nén Parquet tại: <code className="text-indigo-600 font-bold">data/curated/ohlcv/</code>
+            Dữ liệu sẽ được tự động làm sạch và đồng bộ tại: <code className="text-indigo-600 font-bold">AWS S3 Data Lake</code>
           </div>
 
           <button
@@ -332,7 +340,7 @@ export const DataExplorer: React.FC = () => {
       {pipelineResult && (
         <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-5">
           <h3 className="text-sm font-bold text-slate-900 font-mono flex items-center gap-2 border-b border-slate-100 pb-3">
-            <Database size={16} className="text-indigo-600" /> XEM TRƯỚC DỮ LIỆU PARQUET VỪA CÀO THÀNH CÔNG (PARQUET DATA PREVIEW)
+            <Database size={16} className="text-indigo-600" /> XEM TRƯỚC DỮ LIỆU VỪA CÀO THÀNH CÔNG (DATA PREVIEW)
           </h3>
 
           <div className="flex items-center gap-3">
@@ -356,10 +364,10 @@ export const DataExplorer: React.FC = () => {
           </div>
 
           {isLoadingPreview ? (
-            <div className="p-8 text-center text-xs font-mono text-slate-500">Đang đọc dữ liệu Parquet mã {previewTicker}...</div>
+            <div className="p-8 text-center text-xs font-mono text-slate-500">Đang đọc dữ liệu mã {previewTicker}...</div>
           ) : previewData.length === 0 ? (
             <div className="p-6 text-center text-xs font-mono text-slate-500 bg-slate-50 rounded-xl">
-              Chưa có dữ liệu Parquet cho mã {previewTicker}.
+              Chưa có dữ liệu cho mã {previewTicker}.
             </div>
           ) : (
             <div className="overflow-x-auto border border-slate-200 rounded-xl">

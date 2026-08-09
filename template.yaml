@@ -1,0 +1,128 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: AWS Serverless Data Lake Backend with FastAPI and DynamoDB
+
+Parameters:
+  CognitoUserPoolArn:
+    Type: String
+    Description: "The ARN of the Cognito User Pool you created via Amplify (e.g., arn:aws:cognito-idp:ap-southeast-1:123456789012:userpool/ap-southeast-1_xxxxxxxxx)"
+  Environment:
+    Type: String
+    Default: dev
+    AllowedValues:
+      - dev
+      - prod
+
+Resources:
+  # ==========================================
+  # 1. DYNAMODB TABLES
+  # ==========================================
+  UsersTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub "Users-${Environment}"
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: email
+          AttributeType: S
+      KeySchema:
+        - AttributeName: email
+          KeyType: HASH
+
+  WatchlistsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub "UserWatchlists-${Environment}"
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: user_id
+          AttributeType: S
+        - AttributeName: symbol
+          AttributeType: S
+      KeySchema:
+        - AttributeName: user_id
+          KeyType: HASH
+        - AttributeName: symbol
+          KeyType: RANGE
+
+  # ==========================================
+  # 2. S3 BUCKETS (DATA LAKE)
+  # ==========================================
+  RawDataBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub "my-data-lake-raw-${AWS::AccountId}-${Environment}"
+
+  CuratedDataBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub "my-data-lake-curated-${AWS::AccountId}-${Environment}"
+
+  # ==========================================
+  # 3. API GATEWAY WITH COGNITO AUTHORIZER
+  # ==========================================
+  FastApiGateway:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: !Ref Environment
+      Cors:
+        AllowMethods: "'GET,POST,PUT,DELETE,OPTIONS'"
+        AllowHeaders: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+        AllowOrigin: "'*'"
+      Auth:
+        DefaultAuthorizer: CognitoAuthorizer
+        Authorizers:
+          CognitoAuthorizer:
+            UserPoolArn: !Ref CognitoUserPoolArn
+            Identity:
+              Header: Authorization
+
+  # ==========================================
+  # 4. FASTAPI BACKEND (LAMBDA)
+  # ==========================================
+  FastApiFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      PackageType: Image
+      MemorySize: 1024
+      Timeout: 30
+      Environment:
+        Variables:
+          ENVIRONMENT: !Ref Environment
+          USER_DB_TYPE: "dynamodb"
+          DYNAMODB_USERS_TABLE: !Ref UsersTable
+          DYNAMODB_WATCHLIST_TABLE: !Ref WatchlistsTable
+          RAW_DATA_BUCKET: !Ref RawDataBucket
+          CURATED_DATA_BUCKET: !Ref CuratedDataBucket
+          # Note: Add other variables from .env here
+      Policies:
+        # Give Lambda permission to access the created DynamoDB and S3 tables
+        - DynamoDBCrudPolicy:
+            TableName: !Ref UsersTable
+        - DynamoDBCrudPolicy:
+            TableName: !Ref WatchlistsTable
+        - S3CrudPolicy:
+            BucketName: !Ref RawDataBucket
+        - S3CrudPolicy:
+            BucketName: !Ref CuratedDataBucket
+        - AthenaQueryPolicy:
+            WorkspaceName: "primary"
+      Events:
+        ApiEvent:
+          Type: Api
+          Properties:
+            RestApiId: !Ref FastApiGateway
+            Path: /{proxy+}
+            Method: ANY
+    Metadata:
+      Dockerfile: Dockerfile.lambda
+      DockerContext: .
+      DockerTag: python3.12-v1
+
+Outputs:
+  ApiUrl:
+    Description: "Base URL of your API Gateway (Copy this to React Frontend)"
+    Value: !Sub "https://${FastApiGateway}.execute-api.${AWS::Region}.amazonaws.com/${Environment}/"
+  UsersTableName:
+    Description: "DynamoDB Users Table"
+    Value: !Ref UsersTable

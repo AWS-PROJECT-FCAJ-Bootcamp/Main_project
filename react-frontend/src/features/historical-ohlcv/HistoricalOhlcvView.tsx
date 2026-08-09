@@ -19,8 +19,8 @@ import type { PriceData } from '@/types';
 type DateRangePreset = '1W' | '1M' | '3M' | '6M' | '1Y' | 'YTD' | 'ALL';
 
 export const HistoricalOhlcvView: React.FC = () => {
-  const [ticker, setTicker] = useState('FPT');
-  const [searchTicker, setSearchTicker] = useState('FPT');
+  const [ticker, setTicker] = useState('');
+  const [searchTicker, setSearchTicker] = useState('');
   const [activePreset, setActivePreset] = useState<DateRangePreset>('6M');
 
   const [page, setPage] = useState(1);
@@ -50,7 +50,8 @@ export const HistoricalOhlcvView: React.FC = () => {
   // Fetch prices query from backend API
   const { data: apiPrices, isLoading, isError } = useQuery({
     queryKey: ['historical-ohlcv', ticker, startDateStr, endDateStr, page, pageSize],
-    queryFn: () => getPrices(ticker, startDateStr, endDateStr, pageSize),
+    queryFn: () => getPrices(ticker, startDateStr, endDateStr, pageSize, page),
+    enabled: !!ticker,
   });
 
   const rawList: PriceData[] = useMemo(() => apiPrices?.data ?? [], [apiPrices]);
@@ -97,7 +98,7 @@ export const HistoricalOhlcvView: React.FC = () => {
       <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs space-y-3">
         <div className="flex items-center gap-2 text-indigo-700 font-bold text-base">
           <Info size={20} className="text-indigo-600" />
-          <span>VIEW 3: TRA CỨU BẢNG LỊCH SỬ NẾN GIÁ OHLCV (HISTORICAL OHLCV VIEWER)</span>
+          <span>TRA CỨU BẢNG LỊCH SỬ NẾN GIÁ OHLCV (HISTORICAL OHLCV VIEWER)</span>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs text-slate-600 pt-2 border-t border-slate-100">
           <div className="bg-indigo-50/60 p-3 rounded-xl border border-indigo-100 space-y-1">
@@ -116,7 +117,7 @@ export const HistoricalOhlcvView: React.FC = () => {
             <span className="font-bold text-purple-900 flex items-center gap-1.5">
               <Database size={14} className="text-purple-600" /> 3. Nguồn Dữ Liệu Thực Tế
             </span>
-            <p>Truy vấn trực tiếp từ các file Parquet đã nạp trong Data Lake (`data/curated/ohlcv/`) qua DuckDB engine với tốc độ cực nhanh.</p>
+            <p>Truy vấn trực tiếp từ kho dữ liệu chuẩn hóa của Data Lake với tốc độ xử lý tối ưu.</p>
           </div>
         </div>
       </div>
@@ -132,7 +133,8 @@ export const HistoricalOhlcvView: React.FC = () => {
                 placeholder="Nhập mã CK (FPT)..."
                 value={searchTicker}
                 onChange={(e) => setSearchTicker(e.target.value)}
-                className="input-field uppercase text-xs py-2 pl-9 font-mono bg-white border-slate-200"
+                className="input-field uppercase text-xs py-2 font-mono bg-white border-slate-200"
+                style={{ paddingLeft: '2.5rem' }}
               />
             </div>
             <button type="submit" className="btn-primary text-xs py-2 px-4 cursor-pointer font-bold">
@@ -189,7 +191,7 @@ export const HistoricalOhlcvView: React.FC = () => {
         </div>
 
         {isLoading ? (
-          <div className="py-16 text-center text-xs text-slate-500 font-mono">Đang tải lịch sử giá nến OHLCV từ DuckDB...</div>
+          <div className="py-16 text-center text-xs text-slate-500 font-mono">Đang tải lịch sử giá nến OHLCV từ hệ thống...</div>
         ) : sortedList.length === 0 ? (
           <div className="py-16 text-center text-xs text-slate-500 italic">Không tìm thấy bản ghi OHLCV nào cho mã {ticker}.</div>
         ) : (

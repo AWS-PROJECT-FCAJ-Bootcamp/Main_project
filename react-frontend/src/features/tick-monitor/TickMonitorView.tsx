@@ -73,41 +73,13 @@ export const TickMonitorView: React.FC = () => {
         time: p.trading_date.split('T')[0] + ' ' + (idx % 2 === 0 ? '14:30:00' : '14:29:45'),
         price: p.close_price,
         change,
-        volume: p.volume || Math.floor(Math.random() * 5000) + 100,
+        volume: p.volume || 0,
         side: isUp ? 'BUY' : change === 0 ? 'REF' : 'SELL',
       };
     });
 
     setTicks(initialTicks);
   }, [hasRealData, rawPrices, selectedTicker]);
-
-  // Live interval tick simulator ONLY when real data exists for the selected ticker
-  useEffect(() => {
-    if (!hasRealData || ticks.length === 0) return;
-
-    const timer = setInterval(() => {
-      setTicks((prevTicks) => {
-        if (prevTicks.length === 0) return prevTicks;
-        const lastPrice = prevTicks[0].price;
-        const delta = (Math.random() - 0.48) * (lastPrice * 0.003);
-        const newPrice = Math.round(lastPrice + delta);
-        const isBuy = Math.random() > 0.45;
-
-        const newTick: TickItem = {
-          id: `tick-${Date.now()}`,
-          time: new Date().toTimeString().split(' ')[0],
-          price: newPrice,
-          change: Math.round(delta),
-          volume: Math.floor(Math.random() * 6000) + 200,
-          side: isBuy ? 'BUY' : 'SELL',
-        };
-
-        return [newTick, ...prevTicks.slice(0, 49)];
-      });
-    }, 3000);
-
-    return () => clearInterval(timer);
-  }, [hasRealData, selectedTicker]);
 
   const totalBuyVol = useMemo(() => ticks.filter((t) => t.side === 'BUY').reduce((acc, t) => acc + t.volume, 0), [ticks]);
   const totalSellVol = useMemo(() => ticks.filter((t) => t.side === 'SELL').reduce((acc, t) => acc + t.volume, 0), [ticks]);
@@ -132,7 +104,7 @@ export const TickMonitorView: React.FC = () => {
       <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs space-y-3">
         <div className="flex items-center gap-2 text-indigo-700 font-bold text-base">
           <Info size={20} className="text-indigo-600" />
-          <span>VIEW 2: BẢNG GIÁ VÀ DÒNG TIỀN KHỚP LỆNH REAL-TIME (PRICE & TICK MONITOR)</span>
+          <span>BẢNG GIÁ VÀ DÒNG TIỀN KHỚP LỆNH REAL-TIME (PRICE & TICK MONITOR)</span>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs text-slate-600 pt-2 border-t border-slate-100">
           <div className="bg-indigo-50/60 p-3 rounded-xl border border-indigo-100 space-y-1">
@@ -166,7 +138,8 @@ export const TickMonitorView: React.FC = () => {
               placeholder="Nhập mã CK (FPT, VNM, VCB...)"
               value={searchTicker}
               onChange={(e) => setSearchTicker(e.target.value)}
-              className="input-field uppercase text-xs py-2 pl-9 font-mono bg-white border-slate-200 font-bold text-indigo-700"
+              className="input-field uppercase text-xs py-2 font-mono bg-white border-slate-200 font-bold text-indigo-700"
+              style={{ paddingLeft: '2.5rem' }}
             />
           </div>
           <button type="submit" className="btn-primary text-xs py-2 px-4 cursor-pointer font-bold">
@@ -188,7 +161,7 @@ export const TickMonitorView: React.FC = () => {
       {/* ── NO REAL DATA ALERT (If ticker has no data in Data Lake) ── */}
       {isLoading ? (
         <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center text-xs font-mono text-slate-500">
-          Đang đọc dữ liệu giá thực tế từ DuckDB cho mã {selectedTicker}...
+          Đang đọc dữ liệu giá thực tế cho mã {selectedTicker}...
         </div>
       ) : !hasRealData ? (
         <div className="bg-amber-50 rounded-2xl border border-amber-200 p-8 text-center space-y-4 shadow-sm">
@@ -199,8 +172,8 @@ export const TickMonitorView: React.FC = () => {
             <h3 className="text-sm font-extrabold text-amber-900 font-mono">
               KHÔNG TÌM THẤY DỮ LIỆU NẾN GIÁ CHO MÃ [{selectedTicker}]
             </h3>
-            <p className="text-xs text-amber-800">
-              Mã cổ phiếu <strong className="font-mono">{selectedTicker}</strong> hiện chưa có trong cơ sở dữ liệu Data Lake (`data/curated/ohlcv/`).
+            <p className="text-xs text-slate-800">
+              Mã cổ phiếu <strong className="font-mono">{selectedTicker}</strong> hiện chưa có trong cơ sở dữ liệu Data Lake.
             </p>
           </div>
 
@@ -210,7 +183,7 @@ export const TickMonitorView: React.FC = () => {
               onClick={() => navigate('/explorer')}
               className="btn-primary text-xs py-2.5 px-5 flex items-center gap-2 font-bold cursor-pointer"
             >
-              <Database size={15} /> Sang View 1 để cào dữ liệu cho mã [{selectedTicker}] <ArrowRight size={14} />
+              <Database size={15} /> Kích hoạt nạp dữ liệu cho mã [{selectedTicker}] <ArrowRight size={14} />
             </button>
           </div>
         </div>
@@ -285,7 +258,7 @@ export const TickMonitorView: React.FC = () => {
               <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2 font-mono">
                 <Activity size={16} className="text-indigo-600" /> BẢNG TIME & SALES — MÃ: {selectedTicker} ({ticks.length} BẢN GHI DỮ LIỆU THẬT)
               </h3>
-              <span className="text-xs text-slate-500 font-mono">Đồng bộ từ DuckDB Data Lake</span>
+              <span className="text-xs text-slate-500 font-mono">Đồng bộ từ hệ thống Data Lake</span>
             </div>
 
             <div className="overflow-x-auto">
