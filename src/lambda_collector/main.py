@@ -259,5 +259,39 @@ def handler(event: dict, context: Any) -> dict:
         "failed": failed,
         "date_range": {"start": start, "end": end},
     }
+
+    # Trigger Lambda Email Automatically
+    try:
+        email_client = boto3.client("lambda", region_name=region)
+        
+        # Prepare detailed stats for each ticker
+        ticker_details = []
+        for p in payloads:
+            meta = p["metadata"]
+            ticker_details.append({
+                "ticker": meta["ticker"],
+                "status": meta["status"],
+                "rows": meta["rows"],
+                "completed_at": meta["completed_at"]
+            })
+            
+        email_payload = {
+            "email_type": "pipeline_summary",
+            "to_email": os.environ.get("ADMIN_EMAIL", ""),
+            "passed": passed,
+            "failed": failed,
+            "tickers": tickers,
+            "date_range": {"start": start, "end": end},
+            "ticker_details": ticker_details
+        }
+        email_client.invoke(
+            FunctionName=os.environ.get("EMAIL_LAMBDA_NAME", "financial-data-email"),
+            InvocationType="Event", # Async, does not wait for email to send
+            Payload=json.dumps(email_payload).encode("utf-8")
+        )
+        logger.info("Triggered Email Notification Service successfully")
+    except Exception as exc:
+        logger.error("Could not trigger Email Lambda: %s", exc)
+
     logger.info("Collector complete: %s", result)
     return result
