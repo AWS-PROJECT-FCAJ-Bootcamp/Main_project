@@ -72,27 +72,112 @@ def _pipeline_summary_email(event: dict) -> tuple[str, str, str]:
     failed = event.get("failed", 0)
     tickers = event.get("tickers", [])
     date_range = event.get("date_range", {})
+    ticker_details = event.get("ticker_details", [])
 
     subject = f"[Financial Data Lake] Pipeline Complete — {passed} tickers updated"
+    
+    # Text fallback
     text = (
         f"Pipeline run completed.\n\n"
         f"Tickers requested : {len(tickers)}\n"
         f"Succeeded         : {passed}\n"
         f"Failed            : {failed}\n"
         f"Date range        : {date_range.get('start')} → {date_range.get('end')}\n\n"
-        f"Data is available in Athena: financial_data_lake.ohlcv\n"
     )
+    for t in ticker_details:
+        text += f"- {t.get('ticker')}: {t.get('status')} | {t.get('rows')} rows | {t.get('completed_at')}\n"
+
+    # Xây dựng bảng chi tiết cho từng mã cổ phiếu
+    rows_html = ""
+    for idx, t in enumerate(ticker_details):
+        ticker_name = t.get("ticker", "N/A")
+        status = t.get("status", "FAIL")
+        rows = t.get("rows", 0)
+        
+        # Format time to be readable
+        raw_time = t.get("completed_at", "")
+        time_display = raw_time.split(".")[0].replace("T", " ") if raw_time else "N/A"
+        
+        # Color coding
+        bg_color = "#ffffff" if idx % 2 == 0 else "#f8f9fa"
+        status_color = "#2ecc71" if status == "PASS" else "#e74c3c"
+        status_badge = f'<span style="background-color: {status_color}; color: white; padding: 3px 8px; border-radius: 12px; font-size: 12px; font-weight: bold;">{status}</span>'
+        
+        rows_html += f"""
+        <tr style="background-color: {bg_color}; text-align: center; border-bottom: 1px solid #eee;">
+            <td style="padding: 10px; font-weight: bold; color: #34495e;">{ticker_name}</td>
+            <td style="padding: 10px;">{status_badge}</td>
+            <td style="padding: 10px; color: #7f8c8d;">{rows:,}</td>
+            <td style="padding: 10px; font-size: 12px; color: #95a5a6;">{time_display}</td>
+        </tr>
+        """
+
+    # Giao diện HTML siêu đẹp (Premium Template)
     html = f"""
-    <html><body>
-    <h2>Financial Data Lake — Pipeline Summary</h2>
-    <table border="1" cellpadding="6" cellspacing="0">
-      <tr><td><b>Tickers requested</b></td><td>{len(tickers)}</td></tr>
-      <tr><td><b>Succeeded</b></td><td style="color:green">{passed}</td></tr>
-      <tr><td><b>Failed</b></td><td style="color:{'red' if failed else 'green'}">{failed}</td></tr>
-      <tr><td><b>Date range</b></td><td>{date_range.get('start')} → {date_range.get('end')}</td></tr>
-    </table>
-    <p>Data is now available in Athena: <code>financial_data_lake.ohlcv</code></p>
-    </body></html>
+    <!DOCTYPE html>
+    <html>
+    <body style="margin: 0; padding: 0; background-color: #f4f7f6; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
+        <table align="center" border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 600px; margin: 30px auto; background-color: #ffffff; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); overflow: hidden;">
+            <!-- Header -->
+            <tr>
+                <td style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); padding: 30px 20px; text-align: center;">
+                    <h2 style="margin: 0; color: #ffffff; font-size: 24px; letter-spacing: 1px;">Financial Data Lake</h2>
+                    <p style="margin: 10px 0 0 0; color: #a9c2f0; font-size: 14px;">Daily Data Ingestion Report</p>
+                </td>
+            </tr>
+            
+            <!-- Summary Stats -->
+            <tr>
+                <td style="padding: 30px 30px 10px 30px;">
+                    <table width="100%" border="0" cellspacing="0" cellpadding="0">
+                        <tr>
+                            <td width="33%" style="text-align: center; padding: 15px; background-color: #f8f9fa; border-radius: 6px; border-left: 4px solid #3498db;">
+                                <p style="margin: 0; font-size: 12px; color: #7f8c8d; text-transform: uppercase;">Total</p>
+                                <h3 style="margin: 5px 0 0 0; color: #2c3e50; font-size: 22px;">{len(tickers)}</h3>
+                            </td>
+                            <td width="2%"></td>
+                            <td width="31%" style="text-align: center; padding: 15px; background-color: #f8f9fa; border-radius: 6px; border-left: 4px solid #2ecc71;">
+                                <p style="margin: 0; font-size: 12px; color: #7f8c8d; text-transform: uppercase;">Success</p>
+                                <h3 style="margin: 5px 0 0 0; color: #27ae60; font-size: 22px;">{passed}</h3>
+                            </td>
+                            <td width="2%"></td>
+                            <td width="32%" style="text-align: center; padding: 15px; background-color: #f8f9fa; border-radius: 6px; border-left: 4px solid #e74c3c;">
+                                <p style="margin: 0; font-size: 12px; color: #7f8c8d; text-transform: uppercase;">Failed</p>
+                                <h3 style="margin: 5px 0 0 0; color: #c0392b; font-size: 22px;">{failed}</h3>
+                            </td>
+                        </tr>
+                    </table>
+                    <p style="margin-top: 20px; color: #7f8c8d; font-size: 14px; text-align: center;">
+                        Date Range: <b>{date_range.get('start')}</b> to <b>{date_range.get('end')}</b>
+                    </p>
+                </td>
+            </tr>
+            
+            <!-- Detailed Table -->
+            <tr>
+                <td style="padding: 10px 30px 30px 30px;">
+                    <table width="100%" border="0" cellspacing="0" cellpadding="0" style="border: 1px solid #ecf0f1; border-radius: 6px; overflow: hidden;">
+                        <tr style="background-color: #ecf0f1;">
+                            <th style="padding: 12px 10px; font-size: 13px; color: #34495e; text-transform: uppercase;">Ticker</th>
+                            <th style="padding: 12px 10px; font-size: 13px; color: #34495e; text-transform: uppercase;">Status</th>
+                            <th style="padding: 12px 10px; font-size: 13px; color: #34495e; text-transform: uppercase;">Rows</th>
+                            <th style="padding: 12px 10px; font-size: 13px; color: #34495e; text-transform: uppercase;">Time (UTC)</th>
+                        </tr>
+                        {rows_html}
+                    </table>
+                </td>
+            </tr>
+            
+            <!-- Footer -->
+            <tr>
+                <td style="background-color: #f8f9fa; padding: 20px; text-align: center; border-top: 1px solid #eeeeee;">
+                    <p style="margin: 0; font-size: 12px; color: #95a5a6;">Data is successfully saved in Athena: <code>financial_data_lake.ohlcv</code></p>
+                    <p style="margin: 5px 0 0 0; font-size: 12px; color: #bdc3c7;">Automated by AWS EventBridge & Lambda</p>
+                </td>
+            </tr>
+        </table>
+    </body>
+    </html>
     """
     return subject, text, html
 
