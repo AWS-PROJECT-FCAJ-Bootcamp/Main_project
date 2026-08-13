@@ -15,16 +15,12 @@ const CompanyList = lazy(() => import('./features/company/CompanyList').then((m)
 const FinancialStatements = lazy(() => import('./features/financial-statements/FinancialStatements').then((m) => ({ default: m.FinancialStatements })));
 const DataNormalization = lazy(() => import('./features/data-normalization/DataNormalization').then((m) => ({ default: m.DataNormalization })));
 const FinancialRatiosView = lazy(() => import('./features/financial-ratios/FinancialRatiosView').then((m) => ({ default: m.FinancialRatiosView })));
-const DistressLabelingView = lazy(() => import('./features/distress-labeling/DistressLabelingView').then((m) => ({ default: m.DistressLabelingView })));
 const DatasetExportView = lazy(() => import('./features/dataset-export/DatasetExportView').then((m) => ({ default: m.DatasetExportView })));
-const ModelStudioView = lazy(() => import('./features/ai-models/ModelStudioView').then((m) => ({ default: m.ModelStudioView })));
-const PredictionDashboardView = lazy(() => import('./features/prediction/PredictionDashboardView').then((m) => ({ default: m.PredictionDashboardView })));
 const DataExplorer = lazy(() => import('./features/data-explorer/DataExplorer').then((m) => ({ default: m.DataExplorer })));
 const TickMonitorView = lazy(() => import('./features/tick-monitor/TickMonitorView').then((m) => ({ default: m.TickMonitorView })));
 const HistoricalOhlcvView = lazy(() => import('./features/historical-ohlcv/HistoricalOhlcvView').then((m) => ({ default: m.HistoricalOhlcvView })));
 const TechnicalChartsView = lazy(() => import('./features/technical-charts/TechnicalChartsView').then((m) => ({ default: m.TechnicalChartsView })));
-const Settings = lazy(() => import('./features/settings/Settings').then((m) => ({ default: m.Settings })));
-const ProfileView = lazy(() => import('./features/profile/ProfileView').then((m) => ({ default: m.ProfileView })));
+const AboutView = lazy(() => import('./features/about/AboutView').then((m) => ({ default: m.AboutView })));
 
 // ── Suspense Fallback ────────────────────────────────────────────────────────
 const PageLoader = () => (
@@ -69,7 +65,6 @@ function App() {
               }
             >
               <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/profile" element={<ProfileView />} />
               <Route path="/companies" element={<CompanyList />} />
               <Route path="/explorer" element={<DataExplorer />} />
               <Route path="/tick-monitor" element={<TickMonitorView />} />
@@ -79,10 +74,7 @@ function App() {
               <Route path="/financials" element={<FinancialStatements />} />
               <Route path="/normalization" element={<DataNormalization />} />
               <Route path="/ratios" element={<FinancialRatiosView />} />
-              <Route path="/distress" element={<DistressLabelingView />} />
-              <Route path="/ai-studio" element={<ModelStudioView />} />
-              <Route path="/prediction" element={<PredictionDashboardView />} />
-              <Route path="/settings" element={<Settings />} />
+              <Route path="/about" element={<AboutView />} />
               <Route path="/" element={<Navigate to="/dashboard" replace />} />
             </Route>
           </Routes>

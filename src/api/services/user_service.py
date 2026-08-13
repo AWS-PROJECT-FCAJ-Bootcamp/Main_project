@@ -7,6 +7,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+import boto3
+from boto3.dynamodb.conditions import Attr, Key
 from src.api.services.auth_service import hash_password, verify_password
 
 logger = logging.getLogger(__name__)
@@ -180,7 +182,6 @@ class DynamoDBUserService(BaseUserService):
     """AWS DynamoDB implementation for production deployment on AWS Cloud."""
 
     def __init__(self, region_name: str = "ap-southeast-1"):
-        import boto3
         self.dynamodb = boto3.resource("dynamodb", region_name=region_name)
         self.users_table = self.dynamodb.Table(os.environ.get("DYNAMODB_USERS_TABLE", "Users"))
         self.watchlist_table = self.dynamodb.Table(os.environ.get("DYNAMODB_WATCHLIST_TABLE", "UserWatchlists"))
@@ -202,9 +203,9 @@ class DynamoDBUserService(BaseUserService):
         return {k: v for k, v in item.items() if k != "password_hash"}
 
     def authenticate_user(self, email: str, password: str) -> dict[str, Any] | None:
-        response = self.users_table.query(
-            IndexName="EmailIndex",
-            KeyConditionExpression=boto3.dynamodb.conditions.Key("email").eq(email.lower())
+        # scan + FilterExpression with Attr() (not Key() — Key is only for query/index)
+        response = self.users_table.scan(
+            FilterExpression=Attr("email").eq(email.lower())
         )
         items = response.get("Items", [])
         if not items:
@@ -235,7 +236,7 @@ class DynamoDBUserService(BaseUserService):
 
     def get_watchlist(self, user_id: str) -> list[dict[str, Any]]:
         response = self.watchlist_table.query(
-            KeyConditionExpression=boto3.dynamodb.conditions.Key("user_id").eq(user_id)
+            KeyConditionExpression=Key("user_id").eq(user_id)
         )
         return response.get("Items", [])
 

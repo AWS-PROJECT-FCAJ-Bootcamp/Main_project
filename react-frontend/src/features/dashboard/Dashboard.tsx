@@ -68,7 +68,7 @@ export const Dashboard: React.FC = () => {
     <div className="p-6 space-y-6 max-w-screen-xl mx-auto">
       <div>
         <h1 className="text-xl font-bold text-slate-900">Dashboard</h1>
-        <p className="text-sm text-slate-500 mt-0.5">Curated Market Data — FastAPI → DuckDB → Parquet</p>
+        <p className="text-sm text-slate-500 mt-0.5">Hệ thống phân tích dữ liệu thị trường chứng khoán</p>
       </div>
 
       <DashboardControl

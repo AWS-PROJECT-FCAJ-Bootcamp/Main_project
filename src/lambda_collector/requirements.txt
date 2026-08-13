@@ -1,0 +1,4 @@
+boto3>=1.38,<2
+pandas>=2.2,<3
+requests>=2.32,<3
+vnstock>=4.0.3,<5

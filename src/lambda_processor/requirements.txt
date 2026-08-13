@@ -1,0 +1,4 @@
+boto3>=1.38,<2
+pandas>=2.2,<3
+pyarrow>=19,<26
+numpy>=2.1,<3

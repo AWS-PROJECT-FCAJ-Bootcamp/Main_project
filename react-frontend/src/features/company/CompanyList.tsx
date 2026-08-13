@@ -1,8 +1,7 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { RefreshCw } from 'lucide-react';
 import {
   useCompaniesFilterQuery,
-  DEFAULT_COMPANIES,
   STANDARD_INDUSTRIES,
   type IndustryOption,
 } from './api/useCompaniesFilterQuery';
@@ -10,8 +9,9 @@ import { CompanyFilterControl } from './components/CompanyFilterControl';
 import { CompanyTable } from './components/CompanyTable';
 import type { Company } from '@/types';
 
-// Helper to determine financial sector using both English ICB and Vietnamese keywords
-const checkIsFinancial = (ind: string): boolean => {
+// AUDIT FIX: Add full null & undefined guards to prevent runtime string method crashes
+const checkIsFinancial = (ind?: string | null): boolean => {
+  if (!ind) return false;
   const clean = ind.toLowerCase().trim();
   const finKeywords = [
     'banks',
@@ -26,16 +26,15 @@ const checkIsFinancial = (ind: string): boolean => {
   return finKeywords.some((kw) => clean.includes(kw));
 };
 
-// Helper for client-side fallback industry matching
-const matchesIndustry = (companyIndustry: string, targetIndustry: string): boolean => {
-  if (targetIndustry === 'ALL') return true;
+// AUDIT FIX: Safe industry matcher guarded against null/undefined
+const matchesIndustry = (companyIndustry?: string | null, targetIndustry?: string | null): boolean => {
+  if (!targetIndustry || targetIndustry === 'ALL') return true;
   if (!companyIndustry) return false;
   const cInd = companyIndustry.toLowerCase().trim();
   const tInd = targetIndustry.toLowerCase().trim();
 
   if (cInd === tInd) return true;
 
-  // Substring or bilingual fallback mapping
   const aliases: Record<string, string[]> = {
     'banks': ['ngân hàng', 'bank'],
     'financial services': ['dịch vụ tài chính', 'chứng khoán', 'financial'],
@@ -87,17 +86,16 @@ export const CompanyList: React.FC = () => {
     excludeFinancial
   );
 
-  // Normalize base list
+  // PERF & AUDIT FIX: Memoize normalized base list with null safe defaults
   const baseCompanies: Company[] = useMemo(() => {
-    const list = apiData?.data ?? [];
-    const source = list.length > 0 ? list : DEFAULT_COMPANIES;
-    return source.map((c: Company) => {
+    const list: Company[] = Array.isArray(apiData?.data) ? apiData.data : [];
+    return list.map((c: Company) => {
       const exchange = c.exchange || c.market || 'HOSE';
       const industry = c.industry || c.sector || 'Unassigned';
       const isFin = c.is_financial ?? checkIsFinancial(industry);
       return {
         ...c,
-        name: c.name || `CTCP ${c.ticker}`,
+        name: c.name || `CTCP ${c.ticker || 'UNKNOWN'}`,
         exchange,
         industry,
         is_financial: isFin,
@@ -106,6 +104,11 @@ export const CompanyList: React.FC = () => {
       };
     });
   }, [apiData]);
+
+  // PERF: Memoize financialCount calculation
+  const financialCount = useMemo(() => {
+    return baseCompanies.filter((c) => c.is_financial).length;
+  }, [baseCompanies]);
 
   // Industry dropdown options merged with standard ICB taxonomy
   const industries: IndustryOption[] = useMemo(() => {
@@ -119,7 +122,6 @@ export const CompanyList: React.FC = () => {
       optionsMap.set(item.value, item);
     });
 
-    // Add any non-standard industry dynamically
     existing.forEach((ind) => {
       if (!optionsMap.has(ind)) {
         optionsMap.set(ind, { value: ind, label: ind });
@@ -129,8 +131,7 @@ export const CompanyList: React.FC = () => {
     return Array.from(optionsMap.values());
   }, [baseCompanies]);
 
-  // Smart dual-mode filtering: If backend returns real server-filtered data, use directly.
-  // Otherwise, apply client-side filtering on fallback data.
+  // Smart dual-mode filtering
   const filteredCompanies = useMemo(() => {
     if (apiData?.data && apiData.data.length > 0 && apiData.total_records !== undefined) {
       return baseCompanies;
@@ -139,23 +140,23 @@ export const CompanyList: React.FC = () => {
       if (excludeFinancial && c.is_financial) return false;
       const ex = (c.exchange || '').toUpperCase();
       if (selectedExchange !== 'ALL' && ex !== selectedExchange.toUpperCase()) return false;
-      if (!matchesIndustry(c.industry || '', selectedIndustry)) return false;
+      if (!matchesIndustry(c.industry, selectedIndustry)) return false;
       if (debouncedSearchTerm) {
         const query = debouncedSearchTerm.toLowerCase();
-        const matchTicker = c.ticker.toLowerCase().includes(query);
-        const matchName = c.name?.toLowerCase().includes(query);
+        const matchTicker = (c.ticker || '').toLowerCase().includes(query);
+        const matchName = (c.name || '').toLowerCase().includes(query);
         if (!matchTicker && !matchName) return false;
       }
       return true;
     });
   }, [baseCompanies, apiData, excludeFinancial, selectedExchange, selectedIndustry, debouncedSearchTerm]);
 
+  // AUDIT FIX: Reset page to 1 when filters change to prevent stale pagination
   useEffect(() => {
     setCurrentPage(1);
   }, [debouncedSearchTerm, selectedExchange, selectedIndustry, excludeFinancial, pageSize]);
 
   const totalRecords = apiData?.total_records ?? filteredCompanies.length;
-  const financialCount = baseCompanies.filter((c) => c.is_financial).length;
   const totalPages = Math.ceil(totalRecords / pageSize) || 1;
   const startIndex = (currentPage - 1) * pageSize;
 
@@ -183,6 +184,35 @@ export const CompanyList: React.FC = () => {
     return pages;
   }, [currentPage, totalPages]);
 
+  // PERF: Stable callbacks for subcomponents
+  const handleToggleExcludeFinancial = useCallback(() => {
+    setExcludeFinancial((prev) => !prev);
+    setCurrentPage(1);
+  }, []);
+
+  const handleSearchChange = useCallback((value: string) => {
+    setSearchTerm(value);
+  }, []);
+
+  const handleExchangeChange = useCallback((value: string) => {
+    setSelectedExchange(value);
+    setCurrentPage(1);
+  }, []);
+
+  const handleIndustryChange = useCallback((value: string) => {
+    setSelectedIndustry(value);
+    setCurrentPage(1);
+  }, []);
+
+  const handlePageChange = useCallback((page: number) => {
+    setCurrentPage(page);
+  }, []);
+
+  const handlePageSizeChange = useCallback((size: number) => {
+    setPageSize(size);
+    setCurrentPage(1);
+  }, []);
+
   return (
     <div className="p-6 space-y-6 max-w-screen-xl mx-auto">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -192,7 +222,7 @@ export const CompanyList: React.FC = () => {
             <span className="badge-slate font-mono">Mục 4 — Bước 1</span>
           </div>
           <p className="text-sm text-slate-500 mt-0.5">
-            Quản lý và lọc danh sách doanh nghiệp trên HOSE, HNX, UPCOM phục vụ thu thập dữ liệu & huấn luyện AI.
+            Quản lý và lọc danh sách doanh nghiệp trên HOSE, HNX, UPCOM phục vụ thu thập dữ liệu &amp; huấn luyện AI.
           </p>
         </div>
         <button onClick={() => refetch()} className="btn-secondary flex items-center gap-2 self-start sm:self-auto">
@@ -203,14 +233,14 @@ export const CompanyList: React.FC = () => {
 
       <CompanyFilterControl
         searchTerm={searchTerm}
-        onSearchChange={setSearchTerm}
+        onSearchChange={handleSearchChange}
         selectedExchange={selectedExchange}
-        onExchangeChange={setSelectedExchange}
+        onExchangeChange={handleExchangeChange}
         selectedIndustry={selectedIndustry}
-        onIndustryChange={setSelectedIndustry}
+        onIndustryChange={handleIndustryChange}
         industries={industries}
         excludeFinancial={excludeFinancial}
-        onToggleExcludeFinancial={() => setExcludeFinancial((prev) => !prev)}
+        onToggleExcludeFinancial={handleToggleExcludeFinancial}
         filteredCount={totalRecords}
         totalRaw={baseCompanies.length}
         financialCount={financialCount}
@@ -222,15 +252,14 @@ export const CompanyList: React.FC = () => {
         startIndex={startIndex}
         endIndex={endIndex}
         pageSize={pageSize}
-        onPageSizeChange={setPageSize}
+        onPageSizeChange={handlePageSizeChange}
         currentPage={currentPage}
         totalPages={totalPages}
         pageNumbers={pageNumbers}
-        onPageChange={setCurrentPage}
+        onPageChange={handlePageChange}
       />
     </div>
   );
 };
 
 export default CompanyList;
-
