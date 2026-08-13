@@ -14,6 +14,8 @@ import {
 } from 'lucide-react';
 import { getMetricMappings, getDataQualityReport, runDataNormalization } from '@/services/api';
 import type { MetricMappingRule, DataQualityReport } from '@/types';
+import { Input } from '@/components/ui/input';
+import { Select } from '@/components/ui/Select';
 
 // Representative Metric Mappings
 const DEFAULT_METRIC_MAPPINGS: MetricMappingRule[] = [
@@ -103,7 +105,6 @@ const DEFAULT_METRIC_MAPPINGS: MetricMappingRule[] = [
   },
 ];
 
-// Mock Quality Report Data
 const DEFAULT_QUALITY_REPORT: DataQualityReport = {
   total_companies: 0,
   qualified_companies: 0,
@@ -151,7 +152,6 @@ export const DataNormalization: React.FC = () => {
     return !apiMappings && !apiQualityReport;
   }, [apiMappings, apiQualityReport]);
 
-  // Handle adding new alias manually
   const handleAddAlias = (standardKey: string) => {
     const text = (newAliasInput[standardKey] || '').trim();
     if (!text) return;
@@ -168,7 +168,6 @@ export const DataNormalization: React.FC = () => {
     setNewAliasInput((prev) => ({ ...prev, [standardKey]: '' }));
   };
 
-  // Run normalization
   const handleRunNormalization = async () => {
     setIsNormalizing(true);
     setNormalizedSuccess(false);
@@ -181,53 +180,57 @@ export const DataNormalization: React.FC = () => {
   };
 
   return (
-    <div className="p-6 space-y-6 max-w-screen-xl mx-auto">
+    <div className="space-y-6 max-w-screen-xl mx-auto pb-12">
       {/* ── Header ── */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-xl font-bold text-slate-900">Chuẩn hóa Chỉ tiêu & Làm sạch Dữ liệu Thô</h1>
-            <span className="badge-slate font-mono">Mục 5 Spec</span>
+            <h1 className="text-lg sm:text-xl font-black text-slate-900 font-mono">
+              Chuẩn Hóa Chỉ Tiêu &amp; Làm Sạch Dữ Liệu Thô
+            </h1>
+            <span className="px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700 text-xs font-mono font-extrabold border border-indigo-200">
+              Mục 5 Spec
+            </span>
           </div>
-          <p className="text-sm text-slate-500 mt-0.5">
-            Tạo bảng Mapping tên chỉ tiêu, thống kê tỷ lệ missing, xử lý ngoại lệ (Winsorize) & kiểm tra đơn vị tính.
+          <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
+            Mapping tên chỉ tiêu, thống kê tỷ lệ missing, xử lý ngoại lệ (Winsorize) &amp; chuẩn hóa đơn vị tính.
           </p>
         </div>
 
         {/* Sub-Tabs Navigation */}
-        <div className="flex items-center p-1 bg-slate-100 rounded-xl border border-slate-200/80 self-start sm:self-auto">
+        <div className="flex items-center p-1 bg-slate-100/80 rounded-xl border border-slate-200/80 shadow-inner self-start sm:self-auto font-mono text-xs">
           <button
             onClick={() => setActiveTab('MAPPINGS')}
-            className={`flex items-center gap-2 px-3.5 py-2 text-xs font-bold rounded-lg transition-all ${
-              activeTab === 'MAPPINGS' ? 'bg-white text-indigo-700 shadow-sm' : 'text-slate-600 hover:text-slate-900'
+            className={`flex items-center gap-1.5 px-3.5 py-2 font-extrabold rounded-lg transition-all cursor-pointer ${
+              activeTab === 'MAPPINGS' ? 'bg-white text-indigo-700 shadow-2xs' : 'text-slate-500 hover:text-slate-800'
             }`}
           >
-            <ListTree size={14} /> Bảng Mapping Chỉ tiêu
+            <ListTree size={14} /> Bảng Mapping
           </button>
           <button
             onClick={() => setActiveTab('QUALITY')}
-            className={`flex items-center gap-2 px-3.5 py-2 text-xs font-bold rounded-lg transition-all ${
-              activeTab === 'QUALITY' ? 'bg-white text-indigo-700 shadow-sm' : 'text-slate-600 hover:text-slate-900'
+            className={`flex items-center gap-1.5 px-3.5 py-2 font-extrabold rounded-lg transition-all cursor-pointer ${
+              activeTab === 'QUALITY' ? 'bg-white text-indigo-700 shadow-2xs' : 'text-slate-500 hover:text-slate-800'
             }`}
           >
-            <FileCheck2 size={14} /> Báo cáo Quality & Missing
+            <FileCheck2 size={14} /> Quality &amp; Missing
           </button>
           <button
             onClick={() => setActiveTab('OUTLIERS')}
-            className={`flex items-center gap-2 px-3.5 py-2 text-xs font-bold rounded-lg transition-all ${
-              activeTab === 'OUTLIERS' ? 'bg-white text-indigo-700 shadow-sm' : 'text-slate-600 hover:text-slate-900'
+            className={`flex items-center gap-1.5 px-3.5 py-2 font-extrabold rounded-lg transition-all cursor-pointer ${
+              activeTab === 'OUTLIERS' ? 'bg-white text-indigo-700 shadow-2xs' : 'text-slate-500 hover:text-slate-800'
             }`}
           >
-            <AlertOctagon size={14} /> Xử lý Outlier & Winsorizing
+            <AlertOctagon size={14} /> Outlier &amp; Winsorize
           </button>
         </div>
       </div>
 
       {isFallback && (
-        <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-700 font-semibold flex items-center gap-2.5 shadow-sm transition-all animate-fadeIn">
+        <div className="p-4 bg-amber-50/80 backdrop-blur-xl border border-amber-200 rounded-2xl text-xs text-amber-800 font-mono font-bold flex items-center gap-2.5 shadow-2xs">
           <span className="text-sm">⚠️</span>
           <span>
-            Hệ thống đang hiển thị cấu trúc chuẩn hóa & làm sạch dữ liệu thô mẫu (Spec Mục 5) để tham chiếu nghiệp vụ khi API chuyên dụng chưa được tích hợp vào Data Lake chính.
+            Hệ thống đang hiển thị cấu trúc chuẩn hóa &amp; làm sạch dữ liệu thô mẫu (Spec Mục 5) để tham chiếu nghiệp vụ khi API chính chưa kết nối.
           </span>
         </div>
       )}
@@ -235,44 +238,49 @@ export const DataNormalization: React.FC = () => {
       {/* ── TAB 1: METRIC MAPPING ENGINE ── */}
       {activeTab === 'MAPPINGS' && (
         <div className="space-y-6">
-          <div className="bg-amber-50/80 border border-amber-200 rounded-xl p-4 text-xs sm:text-sm text-amber-900 flex items-start gap-3">
+          <div className="bg-amber-50/80 backdrop-blur-xl border border-amber-200 rounded-2xl p-5 text-xs text-amber-900 flex items-start gap-3 shadow-2xs">
             <Info size={18} className="text-amber-600 flex-shrink-0 mt-0.5" />
-            <div>
-              <p className="font-semibold text-amber-950">Quy tắc Chuẩn hóa tên chỉ tiêu (Financial_Application.txt - Mục 5):</p>
-              <p className="mt-1 text-amber-800 leading-relaxed">
+            <div className="space-y-1 font-sans">
+              <p className="font-bold text-amber-950 font-mono">Quy tắc Chuẩn hóa tên chỉ tiêu (Financial_Application.txt - Mục 5):</p>
+              <p className="text-slate-700 leading-relaxed">
                 Mỗi nguồn dữ liệu (Vietstock, CafeF, vnstock...) đặt tên chỉ tiêu BCTC khác nhau.
-                Bảng Mapping dưới đây giúp tự động gom toàn bộ các tên biến thể về một mã biến duy nhất (ví dụ: <code className="bg-amber-100 px-1 rounded">total_assets</code>),
-                đảm bảo công thức tính toán chỉ số tài chính ở các bước sau không bị tính sai hoặc thiếu dữ liệu.
+                Bảng Mapping giúp gom toàn bộ các tên biến thể về mã duy nhất (ví dụ: <code className="bg-amber-100 font-mono px-1 py-0.5 rounded font-bold">total_assets</code>),
+                đảm bảo công thức tính toán chỉ số không bị sai lệch.
               </p>
             </div>
           </div>
 
-          <div className="bg-white rounded-xl border border-slate-200/80 shadow-sm overflow-hidden divide-y divide-slate-100">
-            <div className="px-5 py-4 bg-slate-50/50 flex items-center justify-between">
-              <h2 className="text-sm font-semibold text-slate-800 flex items-center gap-2">
+          <div className="bg-white/90 backdrop-blur-xl rounded-2xl border border-slate-200/70 shadow-[0_8px_30px_rgb(0,0,0,0.04)] overflow-hidden divide-y divide-slate-100">
+            <div className="px-5 py-4 bg-gradient-to-r from-indigo-50/40 via-white to-white flex items-center justify-between font-mono">
+              <h2 className="text-xs sm:text-sm font-extrabold text-slate-800 flex items-center gap-2">
                 <ListTree size={16} className="text-indigo-600" />
-                Danh sách Bảng Mapping Chỉ tiêu ({mappings.length} biến chuẩn)
+                DANH SÁCH BẢNG MAPPING CHỈ TIÊU ({mappings.length} BIẾN CHUẨN)
               </h2>
-              <span className="text-xs text-slate-400">Tự động mapping khi cào JSON/HTML</span>
+              <span className="text-[11px] text-slate-500">Tự động mapping khi cào JSON/HTML</span>
             </div>
 
             {mappings.map((m) => (
-              <div key={m.standard_key} className="p-5 hover:bg-slate-50/60 transition-colors space-y-3">
+              <div key={m.standard_key} className="p-5 hover:bg-indigo-50/30 transition-colors space-y-3">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                  <div className="flex items-center gap-2">
-                    <span className="font-mono text-xs font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded">
+                  <div className="flex items-center gap-2 flex-wrap font-mono">
+                    <span className="text-xs font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 px-2.5 py-1 rounded-lg shadow-2xs">
                       {m.standard_key}
                     </span>
-                    <span className="text-sm font-bold text-slate-800">{m.display_name}</span>
-                    <span className="badge-slate text-[10px] uppercase font-mono">{m.statement_type} — {m.category}</span>
+                    <span className="text-sm font-bold text-slate-900 font-sans">{m.display_name}</span>
+                    <span className="px-2 py-0.5 rounded text-[10px] uppercase font-bold bg-slate-100 text-slate-600 border border-slate-200">
+                      {m.statement_type} — {m.category}
+                    </span>
                   </div>
                 </div>
 
                 {/* Aliases Pills */}
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className="text-xs text-slate-400 font-semibold uppercase tracking-wide mr-1">Bí danh (Aliases):</span>
+                  <span className="text-xs text-slate-400 font-mono font-bold uppercase tracking-wider mr-1">Bí danh (Aliases):</span>
                   {m.aliases.map((alias, i) => (
-                    <span key={i} className="inline-flex items-center gap-1 text-xs bg-slate-100 text-slate-700 px-2.5 py-1 rounded-md border border-slate-200 font-medium">
+                    <span
+                      key={i}
+                      className="inline-flex items-center gap-1 text-xs bg-slate-100 text-slate-700 px-2.5 py-1 rounded-lg border border-slate-200/80 font-mono font-semibold"
+                    >
                       ✓ {alias}
                     </span>
                   ))}
@@ -280,16 +288,17 @@ export const DataNormalization: React.FC = () => {
 
                 {/* Add new alias inline */}
                 <div className="flex items-center gap-2 max-w-md pt-1">
-                  <input
-                    type="text"
+                  <Input
                     placeholder="Thêm bí danh mới..."
                     value={newAliasInput[m.standard_key] || ''}
                     onChange={(e) => setNewAliasInput({ ...newAliasInput, [m.standard_key]: e.target.value })}
-                    className="input-field text-xs py-1 h-8"
+                    variant="glass"
+                    inputSize="sm"
+                    className="font-mono text-xs"
                   />
                   <button
                     onClick={() => handleAddAlias(m.standard_key)}
-                    className="btn-secondary text-xs py-1 px-3 h-8 flex items-center gap-1 flex-shrink-0"
+                    className="btn-secondary text-xs py-1.5 px-3 flex items-center gap-1 flex-shrink-0 cursor-pointer font-mono font-bold rounded-xl bg-white border-slate-200 shadow-2xs"
                   >
                     <Plus size={13} /> Thêm Alias
                   </button>
@@ -304,73 +313,74 @@ export const DataNormalization: React.FC = () => {
       {activeTab === 'QUALITY' && (
         <div className="space-y-6">
           {/* Quality Overview Stats */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 font-mono">
             <div className="metric-card">
-              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Tổng số doanh nghiệp</p>
-              <p className="text-2xl font-bold text-slate-800 mt-1">{qualityReport.total_companies}</p>
+              <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Tổng số doanh nghiệp</p>
+              <p className="text-2xl font-black text-slate-900 mt-1">{qualityReport.total_companies}</p>
             </div>
             <div className="metric-card">
-              <p className="text-xs font-semibold text-emerald-600 uppercase tracking-wide">Đủ điều kiện (≥ {qualityReport.min_years_required} năm BCTC)</p>
-              <p className="text-2xl font-bold text-emerald-600 mt-1">{qualityReport.qualified_companies}</p>
+              <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider">Đủ điều kiện (≥ {qualityReport.min_years_required} năm BCTC)</p>
+              <p className="text-2xl font-black text-emerald-600 mt-1">{qualityReport.qualified_companies}</p>
             </div>
             <div className="metric-card">
-              <p className="text-xs font-semibold text-red-500 uppercase tracking-wide">Bị loại (Thiếu quá nhiều năm)</p>
-              <p className="text-2xl font-bold text-red-500 mt-1">{qualityReport.rejected_companies}</p>
+              <p className="text-[10px] font-bold text-rose-500 uppercase tracking-wider">Bị loại (Thiếu quá nhiều năm)</p>
+              <p className="text-2xl font-black text-rose-600 mt-1">{qualityReport.rejected_companies}</p>
             </div>
             <div className="metric-card">
-              <p className="text-xs font-semibold text-indigo-600 uppercase tracking-wide">Tỷ lệ Missing Rate trung bình</p>
-              <p className="text-2xl font-bold text-indigo-600 mt-1">{qualityReport.missing_rate_overall}%</p>
+              <p className="text-[10px] font-bold text-indigo-600 uppercase tracking-wider">Tỷ lệ Missing Rate trung bình</p>
+              <p className="text-2xl font-black text-indigo-600 mt-1">{qualityReport.missing_rate_overall}%</p>
             </div>
           </div>
 
-          {/* Missing Rates by Metric Table */}
-          <div className="bg-white rounded-xl border border-slate-200/80 shadow-sm overflow-hidden">
-            <div className="px-5 py-4 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
-              <h2 className="text-sm font-semibold text-slate-800 flex items-center gap-2">
+          {/* Missing Rates Table */}
+          <div className="bg-white/90 backdrop-blur-xl rounded-2xl border border-slate-200/70 shadow-[0_8px_30px_rgb(0,0,0,0.04)] overflow-hidden">
+            <div className="px-5 py-4 border-b border-slate-200/70 bg-gradient-to-r from-indigo-50/40 via-white to-white flex items-center justify-between font-mono">
+              <h2 className="text-xs sm:text-sm font-extrabold text-slate-800 flex items-center gap-2">
                 <FileCheck2 size={16} className="text-indigo-600" />
-                Thống kê tỷ lệ Thiếu dữ liệu (Missing Rate) theo từng biến
+                THỐNG KÊ TỶ LỆ THIẾU DỮ LIỆU (MISSING RATE) THEO TỪNG BIẾN
               </h2>
-              <span className="text-xs text-slate-400">Dữ liệu thô trước khi đưa vào mô hình</span>
             </div>
 
-            <table className="w-full text-left">
-              <thead>
-                <tr>
-                  <th className="table-header">Chỉ tiêu tài chính</th>
-                  <th className="table-header text-right">Số lượng bị thiếu (Dòng)</th>
-                  <th className="table-header text-right">Tỷ lệ Missing (%)</th>
-                  <th className="table-header text-right">Đánh giá chất lượng</th>
-                </tr>
-              </thead>
-              <tbody>
-                {qualityReport.missing_by_metric.map((row, i) => (
-                  <tr key={i} className="table-row">
-                    <td className="table-cell font-semibold text-slate-800">{row.metric_name}</td>
-                    <td className="table-cell text-right font-mono font-medium">{row.missing_count} / {qualityReport.total_companies}</td>
-                    <td className="table-cell text-right font-mono font-bold">
-                      <span className={row.missing_percentage > 5 ? 'text-red-500' : 'text-emerald-600'}>
-                        {row.missing_percentage.toFixed(1)}%
-                      </span>
-                    </td>
-                    <td className="table-cell text-right font-medium">
-                      {row.missing_percentage === 0 ? (
-                        <span className="badge-green inline-flex items-center gap-1">
-                          <CheckCircle2 size={10} /> Hoàn hảo
-                        </span>
-                      ) : row.missing_percentage <= 5 ? (
-                        <span className="badge-slate inline-flex items-center gap-1">
-                          <CheckCircle2 size={10} /> Chấp nhận được
-                        </span>
-                      ) : (
-                        <span className="badge-amber inline-flex items-center gap-1">
-                          <AlertTriangle size={10} /> Cần lọc/Winsorize
-                        </span>
-                      )}
-                    </td>
+            <div className="overflow-x-auto custom-scrollbar">
+              <table className="w-full text-xs text-left border-collapse min-w-max">
+                <thead>
+                  <tr className="bg-slate-50 text-slate-600 font-mono border-b border-slate-200 font-bold">
+                    <th className="px-5 py-3.5">Chỉ tiêu tài chính</th>
+                    <th className="px-5 py-3.5 text-right">Số lượng bị thiếu (Dòng)</th>
+                    <th className="px-5 py-3.5 text-right">Tỷ lệ Missing (%)</th>
+                    <th className="px-5 py-3.5 text-right">Đánh giá chất lượng</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-slate-100 font-mono">
+                  {qualityReport.missing_by_metric.map((row, i) => (
+                    <tr key={i} className="hover:bg-indigo-50/40">
+                      <td className="px-5 py-3 font-bold text-slate-900 font-sans">{row.metric_name}</td>
+                      <td className="px-5 py-3 text-right text-slate-700">{row.missing_count} / {qualityReport.total_companies}</td>
+                      <td className="px-5 py-3 text-right font-extrabold">
+                        <span className={row.missing_percentage > 5 ? 'text-rose-600' : 'text-emerald-600'}>
+                          {row.missing_percentage.toFixed(1)}%
+                        </span>
+                      </td>
+                      <td className="px-5 py-3 text-right">
+                        {row.missing_percentage === 0 ? (
+                          <span className="px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-emerald-100 text-emerald-800 border border-emerald-200 inline-flex items-center gap-1">
+                            <CheckCircle2 size={10} /> Hoàn hảo
+                          </span>
+                        ) : row.missing_percentage <= 5 ? (
+                          <span className="px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-slate-100 text-slate-700 border border-slate-200 inline-flex items-center gap-1">
+                            <CheckCircle2 size={10} /> Chấp nhận được
+                          </span>
+                        ) : (
+                          <span className="px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-amber-100 text-amber-800 border border-amber-200 inline-flex items-center gap-1">
+                            <AlertTriangle size={10} /> Cần lọc/Winsorize
+                          </span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       )}
@@ -379,111 +389,118 @@ export const DataNormalization: React.FC = () => {
       {activeTab === 'OUTLIERS' && (
         <div className="space-y-6">
           {/* Controls Panel */}
-          <div className="bg-white rounded-xl border border-slate-200/80 shadow-sm p-5 space-y-4">
-            <div className="border-b border-slate-100 pb-3 flex items-center justify-between">
-              <h2 className="text-sm font-semibold text-slate-800 flex items-center gap-2">
+          <div className="bg-white/80 backdrop-blur-xl rounded-2xl border border-slate-200/70 p-5 shadow-[0_4px_20px_rgb(0,0,0,0.03)] space-y-4">
+            <div className="border-b border-slate-100 pb-3 flex items-center justify-between font-mono">
+              <h2 className="text-xs sm:text-sm font-extrabold text-slate-800 flex items-center gap-2">
                 <Sliders size={16} className="text-indigo-600" />
-                Cấu hình Xử lý Outlier & Chuẩn hóa Đơn vị tính
+                CẤU HÌNH XỬ LÝ OUTLIER &amp; CHUẨN HÓA ĐƠN VỊ TÍNH
               </h2>
-              <span className="badge-green">Winsorize 1% & 99% Active</span>
+              <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                Winsorize 1% &amp; 99% Active
+              </span>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Số năm BCTC tối thiểu</label>
-                <select
-                  value={minYears}
-                  onChange={(e) => setMinYears(Number(e.target.value))}
-                  className="input-field cursor-pointer"
-                >
-                  <option value={3}>Tối thiểu 3 năm dữ liệu</option>
-                  <option value={5}>Tối thiểu 5 năm dữ liệu (Khuyên dùng chuẩn AI)</option>
-                  <option value={7}>Tối thiểu 7 năm dữ liệu</option>
-                </select>
-              </div>
+              <Select
+                label="Số năm BCTC tối thiểu"
+                value={minYears}
+                onChange={(e) => setMinYears(Number(e.target.value))}
+                options={[
+                  { value: '3', label: 'Tối thiểu 3 năm dữ liệu' },
+                  { value: '5', label: 'Tối thiểu 5 năm dữ liệu (Chuẩn AI)' },
+                  { value: '7', label: 'Tối thiểu 7 năm dữ liệu' },
+                ]}
+                variant="glass"
+              />
 
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Ngưỡng Winsorize Outlier (%)</label>
-                <select
-                  value={winsorizePct}
-                  onChange={(e) => setWinsorizePct(Number(e.target.value))}
-                  className="input-field cursor-pointer font-mono"
-                >
-                  <option value={1}>Winsorize 1% và 99% (Khuyên dùng)</option>
-                  <option value={5}>Winsorize 5% và 95%</option>
-                  <option value={0}>Không Winsorize (Giữ nguyên thô)</option>
-                </select>
-              </div>
+              <Select
+                label="Ngưỡng Winsorize Outlier (%)"
+                value={winsorizePct}
+                onChange={(e) => setWinsorizePct(Number(e.target.value))}
+                options={[
+                  { value: '1', label: 'Winsorize 1% và 99% (Khuyên dùng)' },
+                  { value: '5', label: 'Winsorize 5% và 95%' },
+                  { value: '0', label: 'Không Winsorize (Giữ nguyên thô)' },
+                ]}
+                variant="glass"
+              />
 
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Quy đổi Đơn vị tiền tệ</label>
-                <select
-                  value={targetUnit}
-                  onChange={(e) => setTargetUnit(e.target.value)}
-                  className="input-field cursor-pointer"
-                >
-                  <option value="Tỷ VNĐ">Quy đổi tất cả về Tỷ VNĐ</option>
-                  <option value="Triệu VNĐ">Quy đổi tất cả về Triệu VNĐ</option>
-                  <option value="VNĐ">Giữ nguyên VNĐ gốc</option>
-                </select>
-              </div>
+              <Select
+                label="Quy đổi Đơn vị tiền tệ"
+                value={targetUnit}
+                onChange={(e) => setTargetUnit(e.target.value)}
+                options={[
+                  { value: 'Tỷ VNĐ', label: 'Quy đổi tất cả về Tỷ VNĐ' },
+                  { value: 'Triệu VNĐ', label: 'Quy đổi tất cả về Triệu VNĐ' },
+                  { value: 'VNĐ', label: 'Giữ nguyên VNĐ gốc' },
+                ]}
+                variant="glass"
+              />
             </div>
 
             <button
               onClick={handleRunNormalization}
               disabled={isNormalizing}
-              className="btn-primary w-full flex items-center justify-center gap-2"
+              className="btn-primary w-full py-3 text-xs font-extrabold flex items-center justify-center gap-2 cursor-pointer font-mono shadow-md shadow-indigo-200"
             >
               {isNormalizing ? (
-                <><Loader2 size={16} className="animate-spin" /> Đang chạy Winsorizing & Xử lý Outlier...</>
+                <>
+                  <Loader2 size={16} className="animate-spin" /> Đang chạy Winsorizing &amp; Xử lý Outlier...
+                </>
               ) : (
-                <><Play size={16} /> Kích hoạt Quy trình Làm sạch Dữ liệu</>
+                <>
+                  <Play size={16} /> KÍCH HOẠT QUY TRÌNH LÀM SẠCH DỮ LIỆU
+                </>
               )}
             </button>
 
             {normalizedSuccess && (
-              <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-lg text-xs text-emerald-700 font-semibold flex items-center gap-2">
-                <CheckCircle2 size={14} /> Quy trình làm sạch dữ liệu thành công! Dữ liệu đã sẵn sàng để tính các chỉ số tài chính ở Bước 4.
+              <div className="p-3.5 bg-emerald-50 border border-emerald-200 rounded-xl text-xs text-emerald-800 font-mono font-bold flex items-center gap-2 shadow-2xs">
+                <CheckCircle2 size={16} className="text-emerald-600 flex-shrink-0" />
+                <span>Quy trình làm sạch dữ liệu thành công! Dữ liệu đã sẵn sàng để tính chỉ số tài chính.</span>
               </div>
             )}
           </div>
 
           {/* Outliers Log Table */}
-          <div className="bg-white rounded-xl border border-slate-200/80 shadow-sm overflow-hidden">
-            <div className="px-5 py-4 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
-              <h2 className="text-sm font-semibold text-slate-800 flex items-center gap-2">
+          <div className="bg-white/90 backdrop-blur-xl rounded-2xl border border-slate-200/70 shadow-[0_8px_30px_rgb(0,0,0,0.04)] overflow-hidden">
+            <div className="px-5 py-4 border-b border-slate-200/70 bg-gradient-to-r from-indigo-50/40 via-white to-white flex items-center justify-between font-mono">
+              <h2 className="text-xs sm:text-sm font-extrabold text-slate-800 flex items-center gap-2">
                 <AlertOctagon size={16} className="text-amber-600" />
-                Bảng ghi nhận Ngoại lệ (Outlier Logs) đã xử lý
+                BẢNG GHI NHẬN NGOẠI LỆ (OUTLIER LOGS) ĐÃ XỬ LÝ
               </h2>
-              <span className="text-xs text-slate-400">Xử lý division by zero & nợ quá nhỏ</span>
             </div>
 
-            <table className="w-full text-left">
-              <thead>
-                <tr>
-                  <th className="table-header">Ticker</th>
-                  <th className="table-header">Biến tài chính</th>
-                  <th className="table-header">Năm</th>
-                  <th className="table-header text-right">Giá trị thô (Raw)</th>
-                  <th className="table-header text-right">Hành động xử lý (Action)</th>
-                </tr>
-              </thead>
-              <tbody>
-                {qualityReport.outliers_detected.map((out, i) => (
-                  <tr key={i} className="table-row">
-                    <td className="table-cell font-mono font-bold text-indigo-700">{out.ticker}</td>
-                    <td className="table-cell font-semibold text-slate-800">{out.metric}</td>
-                    <td className="table-cell font-mono">{out.year}</td>
-                    <td className="table-cell text-right font-mono text-red-500 font-medium">
-                      {out.raw_value === Infinity ? 'Inf' : out.raw_value.toLocaleString('vi-VN')}
-                    </td>
-                    <td className="table-cell text-right font-medium">
-                      <span className="badge-amber">{out.action}</span>
-                    </td>
+            <div className="overflow-x-auto custom-scrollbar">
+              <table className="w-full text-xs text-left border-collapse min-w-max">
+                <thead>
+                  <tr className="bg-slate-50 text-slate-600 font-mono border-b border-slate-200 font-bold">
+                    <th className="px-5 py-3.5">Ticker</th>
+                    <th className="px-5 py-3.5">Biến tài chính</th>
+                    <th className="px-5 py-3.5">Năm</th>
+                    <th className="px-5 py-3.5 text-right">Giá trị thô (Raw)</th>
+                    <th className="px-5 py-3.5 text-right">Hành động xử lý</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-slate-100 font-mono">
+                  {qualityReport.outliers_detected.map((out, i) => (
+                    <tr key={i} className="hover:bg-indigo-50/40">
+                      <td className="px-5 py-3 font-extrabold text-indigo-700">{out.ticker}</td>
+                      <td className="px-5 py-3 font-bold text-slate-900 font-sans">{out.metric}</td>
+                      <td className="px-5 py-3 text-slate-600">{out.year}</td>
+                      <td className="px-5 py-3 text-right text-rose-600 font-bold">
+                        {out.raw_value === Infinity ? 'Inf' : out.raw_value.toLocaleString('vi-VN')}
+                      </td>
+                      <td className="px-5 py-3 text-right">
+                        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-100 text-amber-800 border border-amber-200">
+                          {out.action}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       )}
