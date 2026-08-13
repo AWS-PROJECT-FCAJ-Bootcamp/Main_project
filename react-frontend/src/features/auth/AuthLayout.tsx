@@ -12,12 +12,12 @@ export const AuthLayout: React.FC = () => {
       className="relative min-h-screen flex items-center justify-center p-4 sm:p-6 overflow-y-auto bg-cover bg-center bg-no-repeat"
       style={{ backgroundImage: `url(${authBg})` }}
     >
-      {/* Dark overlay with blue/indigo glows for tech-finance feel */}
-      <div className="absolute inset-0 bg-slate-950/70 backdrop-blur-sm pointer-events-none" />
+      {/* Dark overlay with corporate blue glows for enterprise data terminal feel */}
+      <div className="absolute inset-0 bg-slate-950/75 backdrop-blur-sm pointer-events-none" />
       
-      {/* Subtle colorful neon lights in background */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-40">
-        <div className="absolute -top-40 -right-40 w-[500px] h-[500px] bg-indigo-500/20 rounded-full blur-3xl" />
+      {/* Subtle colorful ambient lights in background */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-30">
+        <div className="absolute -top-40 -right-40 w-[500px] h-[500px] bg-blue-500/20 rounded-full blur-3xl" />
         <div className="absolute -bottom-40 -left-40 w-[500px] h-[500px] bg-emerald-500/10 rounded-full blur-3xl" />
       </div>
 

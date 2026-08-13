@@ -26,30 +26,30 @@ export const LoginForm: React.FC = () => {
 
   return (
     <div className="w-full max-w-md mx-auto">
-      <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-800 shadow-2xl shadow-black/80 rounded-2xl p-8 relative overflow-hidden">
-        {/* Glow decoration inside the card */}
-        <div className="absolute -top-24 -left-24 w-48 h-48 bg-indigo-500/10 rounded-full blur-2xl pointer-events-none" />
-        <div className="absolute -bottom-24 -right-24 w-48 h-48 bg-cyan-500/10 rounded-full blur-2xl pointer-events-none" />
+      <div className="bg-slate-900/80 backdrop-blur-xl border border-slate-800 shadow-2xl shadow-black/80 rounded-2xl p-8 relative overflow-hidden">
+        {/* Ambient glow inside card */}
+        <div className="absolute -top-24 -left-24 w-48 h-48 bg-blue-500/10 rounded-full blur-2xl pointer-events-none" />
+        <div className="absolute -bottom-24 -right-24 w-48 h-48 bg-sky-500/10 rounded-full blur-2xl pointer-events-none" />
 
         <div className="flex flex-col items-center mb-6">
           <div className="flex items-center gap-2 mb-1">
-            <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center shadow-lg shadow-indigo-600/30">
+            <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center shadow-lg shadow-blue-600/30">
               <TrendingUp size={18} className="text-white" />
             </div>
             <span className="fsd-logo text-3xl tracking-widest font-extrabold">FSD</span>
           </div>
-          <span className="text-[10px] font-mono tracking-[0.25em] text-cyan-400 uppercase font-semibold">
+          <span className="text-[10px] font-mono tracking-[0.25em] text-sky-400 uppercase font-semibold">
             FINANCIAL DATA LAKE
           </span>
         </div>
 
         <div className="mb-6 text-center border-b border-slate-800 pb-5">
-          <h1 className="text-lg font-bold text-white tracking-wide uppercase">Chào mừng trở lại</h1>
-          <p className="text-xs text-slate-400 mt-1">Đăng nhập để vào hệ thống phân tích & giao dịch</p>
+          <h1 className="text-lg font-bold text-white tracking-wide uppercase font-sans">Chào mừng trở lại</h1>
+          <p className="text-xs text-slate-400 mt-1 font-sans">Đăng nhập để vào hệ thống phân tích &amp; giao dịch</p>
         </div>
 
         {errorMessage && (
-          <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 text-red-400 text-xs rounded-xl flex items-center gap-2">
+          <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 text-red-400 text-xs rounded-xl flex items-center gap-2 font-sans">
             <AlertCircle size={14} className="shrink-0" />
             <span>{errorMessage}</span>
           </div>
@@ -57,25 +57,25 @@ export const LoginForm: React.FC = () => {
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="space-y-1.5">
-            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Email</label>
+            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest font-sans">Email</label>
             <input
               {...register('email')}
               type="email"
               placeholder="you@example.com"
-              className="w-full h-10 px-3 py-2 text-sm bg-slate-950/60 border border-slate-800 rounded-lg text-white placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/80 focus:border-transparent transition-all"
+              className="w-full h-10 px-3 py-2 text-sm bg-slate-950/60 border border-slate-800 rounded-lg text-white placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
               autoComplete="email"
             />
-            {errors.email && <p className="text-xs text-red-400 mt-1">{errors.email.message}</p>}
+            {errors.email && <p className="text-xs text-red-400 mt-1 font-sans">{errors.email.message}</p>}
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Mật khẩu</label>
+            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest font-sans">Mật khẩu</label>
             <div className="relative">
               <input
                 type={showPwd ? 'text' : 'password'}
                 {...register('password')}
                 placeholder="••••••••"
-                className="w-full h-10 pl-3 pr-10 py-2 text-sm bg-slate-950/60 border border-slate-800 rounded-lg text-white placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/80 focus:border-transparent transition-all"
+                className="w-full h-10 pl-3 pr-10 py-2 text-sm bg-slate-950/60 border border-slate-800 rounded-lg text-white placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                 autoComplete="current-password"
               />
               <button
@@ -86,13 +86,13 @@ export const LoginForm: React.FC = () => {
                 {showPwd ? <EyeOff size={15} /> : <Eye size={15} />}
               </button>
             </div>
-            {errors.password && <p className="text-xs text-red-400 mt-1">{errors.password.message}</p>}
+            {errors.password && <p className="text-xs text-red-400 mt-1 font-sans">{errors.password.message}</p>}
           </div>
 
           <button 
             type="submit" 
             disabled={isPending} 
-            className="w-full h-10 flex items-center justify-center gap-2 rounded-lg text-sm font-semibold bg-indigo-600 hover:bg-indigo-500 text-white transition-all shadow-lg shadow-indigo-600/30 active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none mt-6"
+            className="w-full h-10 flex items-center justify-center gap-2 rounded-lg text-sm font-semibold bg-blue-600 hover:bg-blue-500 text-white transition-all shadow-lg shadow-blue-600/30 active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none mt-6 cursor-pointer font-sans"
           >
             {isPending ? (
               <><Loader2 size={14} className="animate-spin" /> Đang xác thực...</>
@@ -102,9 +102,9 @@ export const LoginForm: React.FC = () => {
           </button>
         </form>
 
-        <p className="text-center text-xs text-slate-400 mt-6 border-t border-slate-800/60 pt-4">
+        <p className="text-center text-xs text-slate-400 mt-6 border-t border-slate-800/60 pt-4 font-sans">
           Chưa có tài khoản?{' '}
-          <Link to="/register" className="text-cyan-400 font-semibold hover:text-cyan-300 hover:underline transition-colors">
+          <Link to="/register" className="text-sky-400 font-semibold hover:text-sky-300 hover:underline transition-colors">
             Đăng ký ngay
           </Link>
         </p>
