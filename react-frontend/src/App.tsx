@@ -20,6 +20,7 @@ const DataExplorer = lazy(() => import('./features/data-explorer/DataExplorer').
 const TickMonitorView = lazy(() => import('./features/tick-monitor/TickMonitorView').then((m) => ({ default: m.TickMonitorView })));
 const HistoricalOhlcvView = lazy(() => import('./features/historical-ohlcv/HistoricalOhlcvView').then((m) => ({ default: m.HistoricalOhlcvView })));
 const TechnicalChartsView = lazy(() => import('./features/technical-charts/TechnicalChartsView').then((m) => ({ default: m.TechnicalChartsView })));
+const AboutView = lazy(() => import('./features/about/AboutView').then((m) => ({ default: m.AboutView })));
 
 // ── Suspense Fallback ────────────────────────────────────────────────────────
 const PageLoader = () => (
@@ -73,6 +74,7 @@ function App() {
               <Route path="/financials" element={<FinancialStatements />} />
               <Route path="/normalization" element={<DataNormalization />} />
               <Route path="/ratios" element={<FinancialRatiosView />} />
+              <Route path="/about" element={<AboutView />} />
               <Route path="/" element={<Navigate to="/dashboard" replace />} />
             </Route>
           </Routes>

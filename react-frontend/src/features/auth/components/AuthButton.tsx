@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { useAuth } from 'react-oidc-context';
-import { LogIn, LogOut, ShieldCheck, Loader2, KeyRound } from 'lucide-react';
+import { LogIn, LogOut, Loader2, KeyRound } from 'lucide-react';
 import { isCognitoConfigured, signOutRedirect } from '@/config/cognito';
 import { useAppStore } from '@/store/useAppStore';
 
@@ -12,7 +12,7 @@ export const AuthButton: React.FC = () => {
     if (localUser) {
       return (
         <div className="flex items-center gap-2 bg-white p-1 pr-2 rounded-full border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
-          <div className="w-7 h-7 rounded-full bg-indigo-600 text-white flex items-center justify-center text-xs font-bold shadow-inner">
+          <div className="w-7 h-7 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs font-bold shadow-inner">
             {localUser.charAt(0).toUpperCase()}
           </div>
           <div className="flex-col hidden sm:flex px-1">
@@ -33,7 +33,7 @@ export const AuthButton: React.FC = () => {
     return (
       <a
         href="/login"
-        className="flex items-center gap-1.5 text-xs text-indigo-600 hover:text-indigo-800 font-bold bg-indigo-50 border border-indigo-100 px-3 py-1.5 rounded-xl transition-colors"
+        className="flex items-center gap-1.5 text-xs text-blue-600 hover:text-blue-800 font-bold bg-blue-50 border border-blue-100 px-3 py-1.5 rounded-xl transition-colors"
       >
         <KeyRound size={13} /> Đăng Nhập
       </a>
@@ -56,7 +56,7 @@ const CognitoAuthButtonInternal: React.FC = () => {
   if (auth.isLoading) {
     return (
       <div className="flex items-center gap-2 text-xs font-mono text-slate-500 bg-slate-100 px-3 py-1.5 rounded-xl border border-slate-200">
-        <Loader2 size={14} className="animate-spin text-indigo-600" />
+        <Loader2 size={14} className="animate-spin text-blue-600" />
         <span>Kết nối Cognito...</span>
       </div>
     );
